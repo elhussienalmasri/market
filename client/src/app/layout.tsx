@@ -7,6 +7,8 @@ import { ThemeProvider } from "next-themes";
 
 import { ClerkProvider } from "@clerk/nextjs";
 
+import AuthProvider from "../providers/AuthProvider";
+
 const interFont = Inter({ subsets: ["latin"] });
 const barlowFont = Barlow({
   subsets: ["latin"],
@@ -20,15 +22,18 @@ export const metadata: Metadata = {
     "Market is your one-stop online destination for trusted products, seamless shopping, and everyday essentials."
 };
 
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY; if (!PUBLISHABLE_KEY) { throw new Error("Missing Publishable Key"); }
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <html lang="en">
         <body className={`${interFont.className} ${barlowFont.variable}`}>
+         <AuthProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="light"
@@ -37,6 +42,7 @@ export default function RootLayout({
           >
             {children}
           </ThemeProvider>
+          </AuthProvider>
         </body>
       </html>
     </ClerkProvider>
