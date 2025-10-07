@@ -9,6 +9,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import AuthProvider from "../providers/AuthProvider";
 
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+
 const interFont = Inter({ subsets: ["latin"] });
 const barlowFont = Barlow({
   subsets: ["latin"],
@@ -41,6 +44,8 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+             <Toaster />
+            <SonnerToaster position="bottom-left" />
           </ThemeProvider>
           </AuthProvider>
         </body>
