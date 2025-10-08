@@ -42,3 +42,14 @@ export const upsertCategory = async (category: any) => {
     throw new Error(error.response?.data?.error || error.message);
   }
 };
+
+
+export const getAllCategories = async () => {
+  try {
+    const response = await axiosInstance.get("/categories"); // Adjust API path if needed
+    return response.data; // Return the array of categories
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
+};

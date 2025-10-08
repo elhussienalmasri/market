@@ -36,7 +36,6 @@ const ImageUpload: FC<ImageUploadProps> = ({
   if (!CLOUDINARY_CLOUD_KEY) return null;
 
   const onUpload = (result: any) => {
-    console.log("result", result);
     onChange(result.info.secure_url);
   };
 
