@@ -3,7 +3,7 @@
 import { FC, useEffect, useState } from "react";
 import Image from "next/image";
 
-import { CldUploadWidget } from "next-cloudinary";
+import { CldUploadWidget } from "next-cloudinary"; 
 
 interface ImageUploadProps {
   disabled?: boolean;
@@ -12,7 +12,6 @@ interface ImageUploadProps {
   value: string[];
   type: "standard" | "profile" | "cover";
   dontShowPreview?: boolean;
-  cloudinary_key: string;
 }
 
 const ImageUpload: FC<ImageUploadProps> = ({
@@ -22,8 +21,6 @@ const ImageUpload: FC<ImageUploadProps> = ({
   value,
   type,
   dontShowPreview,
-
-  cloudinary_key,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -35,6 +32,9 @@ const ImageUpload: FC<ImageUploadProps> = ({
     return null;
   }
 
+  const CLOUDINARY_CLOUD_KEY = process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_NAME;
+  if (!CLOUDINARY_CLOUD_KEY) return null;
+
   const onUpload = (result: any) => {
     console.log("result", result);
     onChange(result.info.secure_url);
@@ -42,7 +42,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
 
   if (type === "profile") {
     return (
-      <div className="relative rounded-full w-52 h-52 inset-x-96 bg-gray-200 border-2 border-white shadow-2xl overflow-visible">
+      <div className="relative rounded-full w-52 h-52  bg-gray-200 border-2 border-white shadow-2xl overflow-visible">
         {value.length > 0 && (
           <Image
             src={value[0]}
@@ -52,7 +52,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
             className="w-52 h-52 rounded-full object-cover absolute top-0 left-0 bottom-0 right-0"
           />
         )}
-        <CldUploadWidget onSuccess={onUpload} uploadPreset={cloudinary_key}>
+        <CldUploadWidget onSuccess={onUpload} uploadPreset={CLOUDINARY_CLOUD_KEY}>
           {({ open }) => {
             const onClick = () => {
               open();

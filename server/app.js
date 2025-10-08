@@ -12,12 +12,13 @@ dotenv.config(); // Load .env file
 
 const app = express();
 
+app.use(clerkMiddleware());
+
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({}));
 
 app.use(express.json()); // to parse req.body
-app.use(clerkMiddleware());
 
 app.get('/', (req, res) => {
   res.send(`Server running on port ${PORT}`);

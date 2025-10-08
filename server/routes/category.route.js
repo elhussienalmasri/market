@@ -1,6 +1,14 @@
 import express from "express";
 import { Category } from "../models/category.model.js";
 
+import { requireAuth } from "@clerk/express";
+
+import {
+  getAllCategories,
+  getCategory,
+  deleteCategory,
+} from "../controller/category.controller.js";
+
 const router = express.Router();
 
 // Upsert (create or update) category
@@ -45,5 +53,9 @@ router.post("/upsert", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
+router.get("/", getAllCategories);
+router.get("/:categoryId", requireAuth(), getCategory);
+router.delete("/:categoryId", deleteCategory);
 
 export default router;

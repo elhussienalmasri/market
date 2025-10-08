@@ -43,10 +43,10 @@ interface Category {
 
 interface CategoryDetailsProps {
   data?: Category;
-  cloudinary_key: string;
+  fetchCategories?: () => Promise<void>; 
 }
 
-const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => {
+const CategoryDetails: FC<CategoryDetailsProps> = ({ data, fetchCategories }) => {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -75,45 +75,31 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
   }, [data, form]);
 
   // Submit handler using Axios
-  const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
-    try {
-      const payload = {
-        name: values.name ?? form.getValues("name"),
-        url: values.url ?? form.getValues("url"),
-        image: values.image?.[0]?.url || "",
-        featured: values.featured ?? false,
-      };
+ const handleSubmit = async (values: z.infer<typeof CategoryFormSchema>) => {
+  try {
+    const payload = {
+      _id: data?._id, // include ID if updating
+      name: values.name ?? form.getValues("name"),
+      url: values.url ?? form.getValues("url"),
+      image: values.image?.[0]?.url || "",
+      featured: values.featured ?? false,
+    };
 
-      const response = await axiosInstance.post("/categories/upsert",
-        payload
-      );
+    const response = await axiosInstance.post("/categories/upsert", payload);
 
-      const result = response.data;
+    toast({
+      title: data?._id
+        ? "Category updated successfully."
+        : `🎉 '${response.data.name}' created successfully!`,
+    });
 
-      toast({
-        title: data?._id
-          ? "Category updated successfully."
-          : `🎉 '${result.name}' created successfully!`,
-      });
+    if (fetchCategories) await fetchCategories(); 
 
-      if (data?._id) {
-        router.refresh();
-      } else {
-        router.push("/dashboard/admin/categories");
-      }
-    } catch (error: any) {
-      console.error("Error saving category:", error);
-
-      const message =
-        error.response?.data?.error || error.message || "Something went wrong.";
-
-      toast({
-        variant: "destructive",
-        title: "Oops!",
-        description: message,
-      });
-    }
-  };
+    router.push("/dashboard/admin/categories"); // optional
+  } catch (error: any) {
+    console.error("Error saving category:", error);
+  }
+};
 
   return (
     <AlertDialog>
@@ -138,8 +124,7 @@ const CategoryDetails: FC<CategoryDetailsProps> = ({ data, cloudinary_key }) => 
                   <FormItem>
                     <FormControl>
                       <ImageUpload
-                        type="profile"
-                        cloudinary_key={cloudinary_key}
+                        type="profile"        
                         value={field.value.map((img) => img.url)}
                         disabled={isLoading}
                         onChange={(url) => field.onChange([{ url }])}
