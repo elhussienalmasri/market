@@ -34,6 +34,12 @@ const SubCategorySchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+      products: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
   },
   { timestamps: true }
 );

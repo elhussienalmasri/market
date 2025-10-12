@@ -1,12 +1,11 @@
 import express from "express";
 import { Category } from "../models/category.model.js";
 
-import { requireAuth } from "@clerk/express";
-
 import {
   getAllCategories,
   getCategory,
   deleteCategory,
+  getAllSubCategoriesForCategory
 } from "../controller/category.controller.js";
 
 const router = express.Router();
@@ -55,7 +54,9 @@ router.post("/upsert", async (req, res) => {
 });
 
 router.get("/", getAllCategories);
-router.get("/:categoryId", requireAuth(), getCategory);
+router.get("/:categoryId", getCategory);
 router.delete("/:categoryId", deleteCategory);
+
+router.get("/:categoryId/subcategories", getAllSubCategoriesForCategory);
 
 export default router;

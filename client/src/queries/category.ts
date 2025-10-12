@@ -53,3 +53,18 @@ export const getAllCategories = async () => {
     throw error;
   }
 };
+
+// Function: getAllSubCategoriesForCategory
+// Description: Retrieves all subcategories for a specific category (Public)
+// Parameters:
+//   - categoryId: The ID of the category whose subcategories are to be retrieved
+// Returns: Array of subcategories sorted by updatedAt in descending order
+export const getAllSubCategoriesForCategory = async (categoryId:string) => {
+  try {
+    const response = await axiosInstance.get(`/categories/${categoryId}/subcategories`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
+};

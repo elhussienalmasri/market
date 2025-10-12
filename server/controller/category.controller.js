@@ -1,7 +1,7 @@
 import { Category } from "../models/category.model.js";
-import { User} from "../models/user.model.js";
-import { clerkMiddleware, requireAuth, getAuth, clerkClient } from "@clerk/express";
-
+import { SubCategory } from "../models/subCategory.model.js";
+import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 // Get all categories (Public)
 export const getAllCategories = async (req, res) => {
   try {
@@ -33,12 +33,11 @@ export const getCategory = async (req, res) => {
 
 // DELETE category (Admin only)
 export const deleteCategory = async (req, res) => {
-   //const { userId } = getAuth(req);
+  //const { userId } = getAuth(req);
   try {
     const { userId } = req.auth; // from Clerk middleware
-   
+
     if (!userId) {
-      console.log("Unauthenticated.")
       return res.status(401).json({ error: "Unauthenticated." });
     }
 
@@ -71,5 +70,22 @@ export const deleteCategory = async (req, res) => {
   }
 };
 
+export const getAllSubCategoriesForCategory = async (req, res, next) => {
 
+  try {
+    const { categoryId } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      throw new Error("Invalid category ID format.");
+    }
+
+    const category = await SubCategory.find({ categoryId })
+      .sort({ updatedAt: -1 })
+      .exec();
+
+    if (!category) throw new Error("Category not found.");
+    res.status(200).json(category);
+  } catch (error) {
+    next(error);
+  }
+};

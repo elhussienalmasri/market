@@ -1,0 +1,21 @@
+import express from "express";
+import {
+  upsertProduct,
+  getProductVariant,
+  getProductMainInfo,
+  getAllStoreProducts,
+  deleteProduct,
+} from "../controller/product.controller.js";
+
+import { requireAuth } from "@clerk/express";
+
+
+const router = express.Router();
+
+router.post("/upsert/:storeUrl", requireAuth(), upsertProduct);
+router.get("/:productId/variant/:variantId", getProductVariant);
+router.get("/:productId/info", getProductMainInfo);
+router.get("/:storeUrl", getAllStoreProducts);
+router.delete("/:productId", requireAuth(), deleteProduct);
+
+export default router;

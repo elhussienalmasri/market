@@ -25,6 +25,18 @@ const CategorySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    subCategories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SubCategory",
+      },
+    ],
+    products: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
   },
   { timestamps: true } // adds createdAt and updatedAt
 );
