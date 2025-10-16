@@ -38,7 +38,7 @@ import { getAllSubCategoriesForCategory } from "@/queries/category";
 
 import { WithOutContext as ReactTags } from "react-tag-input";
 
-import { ProductWithVariantType, Category, SubCategory } from "@/lib/types";
+import { ProductWithVariantType, Category, SubCategory, OfferTag  } from "@/lib/types";
 import ImagesPreviewGrid from "../shared/images-preview-grid";
 import ClickToAddInputs from "./click-to-add";
 import {
@@ -51,19 +51,19 @@ import {
 
 import { useSession } from "@clerk/nextjs";
 
-
 interface ProductDetailsProps {
   data?: Partial<ProductWithVariantType>;
+  offerTags:OfferTag[];
   categories: Category[];
   storeUrl: string;
 }
 
 const ProductDetails: FC<ProductDetailsProps> = ({
   data,
+  offerTags,
   categories,
   storeUrl,
 }) => {
-
   // Initializing necessary hooks
   const { toast } = useToast(); // Hook for displaying toast messages
   const router = useRouter(); // Hook for routing
@@ -98,6 +98,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
       images: data?.images || [],
       categoryId: data?.categoryId,
       subCategoryId: data?.subCategoryId,
+      offerTag: data?.offerTagId,
       brand: data?.brand,
       sku: data?.sku,
       colors: data?.colors || [{ color: "" }],
@@ -110,13 +111,15 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   // UseEffect to get subCategories when user pick/change a category
   useEffect(() => {
     const categoryId = form.watch().categoryId;
+    const defaultCategoryId = form.getValues("categoryId");
 
     if (!categoryId) return; //  Prevent calling with undefined
     const getSubCategories = async () => {
       const res = await getAllSubCategoriesForCategory(categoryId);
       setSubCategories(res);
     };
-    if (hasCategory) {
+    if (hasCategory || defaultCategoryId) {
+      setHasCategory(true);
       getSubCategories();
     }
 
@@ -137,7 +140,6 @@ const ProductDetails: FC<ProductDetailsProps> = ({
   // Submit handler for form submission
   const handleSubmit = async (values: z.infer<typeof ProductFormSchema>) => {
     try {
-
       if (!session) {
         console.error("User not logged in");
         return;
@@ -151,17 +153,20 @@ const ProductDetails: FC<ProductDetailsProps> = ({
         name: values.name ?? form.getValues("name"),
         description: values.description ?? form.getValues("description"),
         variantName: values.variantName ?? form.getValues("variantName"),
-        variantDescription: values.variantDescription ?? form.getValues("variantDescription"),
+        variantDescription:
+          values.variantDescription ?? form.getValues("variantDescription"),
         images: values.images ?? form.getValues("images"),
         categoryId: values.categoryId ?? form.getValues("categoryId"),
         subCategoryId: values.subCategoryId ?? form.getValues("subCategoryId"),
+        offerTagId: values.offerTag ?? form.getValues("offerTag"),
+        // order: values.order ?? form.getValues('order'),
         isSale: values.isSale || false,
         brand: values.brand ?? form.getValues("brand"),
         sku: values.sku,
         colors: values.colors,
         sizes: values.sizes || [],
         keywords: values.keywords || [],
-      }
+      };
 
 
       if (!token) {
@@ -170,14 +175,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
         return; // stop execution
       }
 
-      // Upserting category data  
-      const response = await upsertProduct(
-        product,
-        storeUrl,
-        token
-      );
-
-
+      // Upserting category data
+      const response = await upsertProduct(product, storeUrl, token);
 
       // Displaying success message
       toast({
@@ -381,9 +380,10 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       <FormLabel>Product Category</FormLabel>
                       <Select
                         disabled={isLoading || categories.length == 0}
+                        value={field.value}
                         onValueChange={(value) => {
                           field.onChange(value);
-                          setHasCategory(true)
+                          setHasCategory(true);
                         }}
                       >
                         <FormControl>
@@ -393,7 +393,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                               placeholder="Select a category"
                             />
                           </SelectTrigger>
-                        </FormControl><SelectContent>
+                        </FormControl>
+                        <SelectContent>
                           {categories.map((category) => (
                             <SelectItem
                               key={category._id || crypto.randomUUID()}
@@ -444,6 +445,43 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                   />
                 )}
               </div>
+              {/* Offer Tag */}
+              <FormField
+                disabled={isLoading}
+                control={form.control}
+                name="offerTag"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Product Offer tag</FormLabel>
+                    <Select
+                      disabled={isLoading || categories.length == 0}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder="Select an offer tag"
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {offerTags &&
+                          offerTags.map((offer) => (
+                            <SelectItem
+                              value={offer._id}
+                              key={offer._id}
+                            >
+                              {offer.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Brand, Sku */}
               <div className="flex flex-col lg:flex-row gap-4">
                 <FormField
@@ -486,7 +524,7 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                       <FormControl>
                         <ReactTags
                           handleAddition={handleAddition}
-                          handleDelete={() => { }}
+                          handleDelete={() => {}}
                           placeholder="Keywords (e.g., winter jacket, warm, stylish)"
                           classNames={{
                             tagInputField:
@@ -559,8 +597,8 @@ const ProductDetails: FC<ProductDetailsProps> = ({
                 {isLoading
                   ? "loading..."
                   : data?.productId && data.variantId
-                    ? "Save store information"
-                    : "Create store"}
+                  ? "Save product information"
+                  : "Create product"}
               </Button>
             </form>
           </Form>

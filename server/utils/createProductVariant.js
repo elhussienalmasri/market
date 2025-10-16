@@ -35,10 +35,11 @@ export const createProductVariant = async (product, existingProduct) => {
   // Create related docs (images, colors, sizes)
   const [imageDocs, colorDocs, sizeDocs] = await Promise.all([
     ProductVariantImage.insertMany(
-      product.images.map((i) => ({
-        url: i.url,
-        alt: i.url.split("/").pop() || "",
+      product.images.map((image, index) => ({
+        url: image.url,
+        alt: image.url.split("/").pop() || "",
         productVariantId: newVariant._id,
+        order: index 
       }))
     ),
     Color.insertMany(

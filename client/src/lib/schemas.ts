@@ -191,6 +191,11 @@ export const ProductFormSchema = z.object({
       invalid_type_error: "Product sub-category ID must be a valid String.",
     })
     .optional(),
+  offerTag: z
+  .string({
+    invalid_type_error: 'Product offer tag ID must be a valid String.',
+  })
+  .optional(),
   isSale: z.boolean().default(false),
   brand: z
     .string({
@@ -251,4 +256,30 @@ export const ProductFormSchema = z.object({
         message: "All size inputs must be filled correctly.",
       }
     ),
+});
+
+// OfferTag form schema
+export const OfferTagFormSchema = z.object({
+  name: z
+    .string({
+      required_error: 'OfferTag name is required.',
+      invalid_type_error: 'OfferTag name must be a string.',
+    })
+    .min(2, { message: 'OfferTag name must be at least 2 characters long.' })
+    .max(50, { message: 'OfferTag name cannot exceed 50 characters.' })
+    .regex(/^[a-zA-Z0-9\s&$.%,']+$/, {
+      message:
+        'Only letters, numbers, and spaces are allowed in the category name.',
+    }),
+  url: z
+    .string({
+      required_error: 'OfferTag url is required',
+      invalid_type_error: 'OfferTag url must be a string',
+    })
+    .min(2, { message: 'OfferTag url must be at least 2 characters long.' })
+    .max(50, { message: 'OfferTag url cannot exceed 50 characters.' })
+    .regex(/^(?!.*(?:[-_ ]){2,})[a-zA-Z0-9_-]+$/, {
+      message:
+        'Only letters, numbers, hyphen, and underscore are allowed in the category url, and consecutive occurrences of hyphens, underscores, or spaces are not permitted.',
+    }),
 });

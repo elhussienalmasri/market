@@ -14,7 +14,6 @@ export type SubCategory = {
   updatedAt: Date;
 };
 
-
 export type Category = {
   _id: string;
   name: string;
@@ -25,7 +24,6 @@ export type Category = {
   createdAt: Date;
   updatedAt: Date;
 };
-
 
 // Product + variant
 export type ProductWithVariantType = {
@@ -38,16 +36,18 @@ export type ProductWithVariantType = {
   images: { url: string }[];
   categoryId?: string;
   subCategoryId?: string;
+  offerTagId?: string;
   isSale: boolean;
   brand: string;
   sku: string;
   colors: { color: string }[];
   sizes: { size: string; quantity: number; price: number; discount: number }[];
   keywords: string[];
+  
 };
 
 export type StoreProductType = {
-  _id: string
+  _id: string;
   name: string;
   description?: string | null;
   brand?: string | null;
@@ -112,4 +112,12 @@ export type StoreData = {
   userId: string;
   createdAt?: Date;
   updatedAt?: Date;
+};
+
+export type OfferTag = {
+  _id: string;
+  name: string;
+  url: string;
+  createdAt: Date;
+  updatedAt: Date;
 };

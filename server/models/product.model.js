@@ -46,8 +46,13 @@ const ProductSchema = new mongoose.Schema(
         ref: "ProductVariant",
       },
     ],
+    offerTag: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'OfferTag',
+      required: false,
+    },
   },
-  { timestamps: true } // adds createdAt & updatedAt automatically
+  { timestamps: true } 
 );
 
 
@@ -150,6 +155,11 @@ const ProductVariantImageSchema = new mongoose.Schema(
       required: true,
       ref: "ProductVariant",
       index: true,
+    },
+    order: {
+      type: Number,
+      required: false, 
+      default: null, // optional but can be null if needed
     },
   },
   { timestamps: true } 

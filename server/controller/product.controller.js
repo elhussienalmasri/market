@@ -37,7 +37,6 @@ export const upsertProduct = async (req, res) => {
     );
 
     if (!existingProduct) {
-
       //  Create the main Product
       const newProduct = await Product.create({
         name: product.name,
@@ -47,6 +46,7 @@ export const upsertProduct = async (req, res) => {
         storeId: store._id,
         categoryId: product.categoryId,
         subCategoryId: product.subCategoryId || null,
+        offerTag: product.offerTagId,
       });
 
       const result = await createProductVariant(product, newProduct);
@@ -116,6 +116,7 @@ export const getProductMainInfo = async (req, res) => {
       categoryId: product.categoryId,
       subCategoryId: product.subCategoryId,
       storeId: product.store,
+      offerTag: product.offerTag
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -133,8 +134,19 @@ export const getAllStoreProducts = async (req, res) => {
     const products = await Product.find({ storeId: store._id })
       .populate("categoryId subCategoryId storeId")
       .populate({
-        path: "variants",
-        populate: ["images", "colors", "sizes"],
+        path: 'variants',
+        populate: [
+          {
+            path: 'images',
+            options: { sort: { order: 1 } }, //  order by `order` ascending
+          },
+          {
+            path: 'colors',
+          },
+          {
+            path: 'sizes',
+          },
+        ],
       });
     res.json(products);
   } catch (error) {
