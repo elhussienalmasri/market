@@ -1,8 +1,6 @@
-// utils/createProductVariant.js
-
 import slugify from "slugify";
 import { generateUniqueSlug } from "./generateUniqueSlug.js"; // adjust path as needed
-import {Product, ProductVariant, Color, Size, ProductVariantImage } from "../models/product.model.js"
+import {Product, ProductVariant, Color, Size, ProductVariantImage, Spec } from "../models/product.model.js"
 
 // Main function
 export const createProductVariant = async (product, existingProduct) => {
@@ -21,6 +19,8 @@ export const createProductVariant = async (product, existingProduct) => {
       sku: product.sku,
       keywords: product.keywords.join(","),
       productId: existingProduct._id,
+      saleEndDate: product.isSale ? product.saleEndDate : "",
+      variantImage: product.variantImage,
     };
 
   //  Create the ProductVariant document
@@ -33,37 +33,46 @@ export const createProductVariant = async (product, existingProduct) => {
         );
 
   // Create related docs (images, colors, sizes)
-  const [imageDocs, colorDocs, sizeDocs] = await Promise.all([
-    ProductVariantImage.insertMany(
-      product.images.map((image, index) => ({
-        url: image.url,
-        alt: image.url.split("/").pop() || "",
-        productVariantId: newVariant._id,
-        order: index 
-      }))
-    ),
-    Color.insertMany(
-      product.colors.map((c) => ({
-        name: c.color,
-        productVariantId: newVariant._id,
-      }))
-    ),
-    Size.insertMany(
-      product.sizes.map((s) => ({
-        size: s.size,
-        quantity: s.quantity,
-        price: s.price,
-        discount: s.discount,
-        productVariantId: newVariant._id,
-      }))
-    ),
-  ]);
+const [imageDocs, colorDocs, sizeDocs, specDocs] = await Promise.all([
+  ProductVariantImage.insertMany(
+    product.images.map((image, index) => ({
+      url: image.url,
+      alt: image.url.split("/").pop() || "",
+      productVariantId: newVariant._id,
+      order: index
+    }))
+  ),
+  Color.insertMany(
+    product.colors.map((c) => ({
+      name: c.color,
+      productVariantId: newVariant._id,
+    }))
+  ),
+  Size.insertMany(
+    product.sizes.map((s) => ({
+      size: s.size,
+      quantity: s.quantity,
+      price: s.price,
+      discount: s.discount,
+      productVariantId: newVariant._id,
+    }))
+  ),
+  Spec.insertMany(
+    product.variant_specs.map((spec) => ({
+      name: spec.name,
+      value: spec.value,
+      productVariantId: newVariant._id,
+    }))
+  ),
+]);
 
-  // Update ProductVariant references
-  newVariant.images = imageDocs.map((img) => img._id);
-  newVariant.colors = colorDocs.map((c) => c._id);
-  newVariant.sizes = sizeDocs.map((s) => s._id);
+// Update ProductVariant references
+newVariant.images = imageDocs.map((img) => img._id);
+newVariant.colors = colorDocs.map((c) => c._id);
+newVariant.sizes = sizeDocs.map((s) => s._id);
+newVariant.specs = specDocs.map((spec) => spec._id);
 
+// Save the updated variant
   await newVariant.save();
 
   return {

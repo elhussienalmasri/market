@@ -1,7 +1,7 @@
 import { Store } from "../models/store.model.js";
 import slugify from "slugify";
 
-import { Product } from "../models/product.model.js"
+import { Product, Question, Spec } from "../models/product.model.js"
 
 import { createProductVariant } from "../utils/createProductVariant.js";
 import { generateUniqueSlug } from "../utils/generateUniqueSlug.js";
@@ -48,6 +48,29 @@ export const upsertProduct = async (req, res) => {
         subCategoryId: product.subCategoryId || null,
         offerTag: product.offerTagId,
       });
+
+      // 2. Create specs and questions in parallel
+      const [specDocs, questionDocs] = await Promise.all([
+        Spec.insertMany(
+          product.product_specs.map((spec) => ({
+            name: spec.name,
+            value: spec.value,
+            productId: newProduct._id,
+          }))
+        ),
+        Question.insertMany(
+          product.questions.map((q) => ({
+            question: q.question,
+            answer: q.answer,
+            productId: newProduct._id,
+          }))
+        ),
+      ]);
+
+      // 3. Update the product with the created spec/question IDs
+      newProduct.specs = specDocs.map((s) => s._id);
+      newProduct.questions = questionDocs.map((q) => q._id);
+      await newProduct.save();
 
       const result = await createProductVariant(product, newProduct);
       res.status(201).json(result);

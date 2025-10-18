@@ -34,16 +34,20 @@ export type ProductWithVariantType = {
   variantName: string;
   variantDescription?: string;
   images: { url: string }[];
+  variantImage: string;
   categoryId?: string;
   subCategoryId?: string;
   offerTagId?: string;
   isSale: boolean;
+  saleEndDate?: string;
   brand: string;
   sku: string;
   colors: { color: string }[];
   sizes: { size: string; quantity: number; price: number; discount: number }[];
+   product_specs: { name: string; value: string }[];
+  variant_specs: { name: string; value: string }[];
   keywords: string[];
-  
+  questions: { question: string; answer: string }[];
 };
 
 export type StoreProductType = {

@@ -51,6 +51,14 @@ const ProductSchema = new mongoose.Schema(
       ref: 'OfferTag',
       required: false,
     },
+    specs: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Spec'
+    }],
+    questions: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Question'
+    }],
   },
   { timestamps: true } 
 );
@@ -66,6 +74,9 @@ const ProductVariantSchema = new mongoose.Schema(
     variantDescription: {
       type: String,
     },
+    variantImage: {
+      type: String,
+    },
     slug: {
       type: String,
       unique: true,
@@ -79,6 +90,10 @@ const ProductVariantSchema = new mongoose.Schema(
       type: [String],
       default: [],  
     },
+    saleEndDate: {
+    type: String, // Could be Date if it represents a date
+    default: null,
+  },
     sku: {
       type: String,
     },
@@ -106,6 +121,10 @@ const ProductVariantSchema = new mongoose.Schema(
         ref: "Color",
       },
     ],
+    specs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Spec', // Make sure Spec model is defined and exported
+  }],
   },
   { timestamps: true } // automatically adds createdAt & updatedAt
 );
@@ -180,8 +199,50 @@ const ColorSchema = new mongoose.Schema(
       index: true,
     },
   },
-  { timestamps: true } // adds createdAt and updatedAt automatically
+  { timestamps: true } 
 );
+
+
+const SpecSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  value: {
+    type: String,
+    required: true,
+  },
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    default: null,
+  },
+  variantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductVariant',
+    default: null,
+  },
+}, {
+  timestamps: true, 
+});
+
+const QuestionSchema = new mongoose.Schema({
+  question: {
+    type: String,
+    required: true,
+  },
+  answer: {
+    type: String,
+    required: true,
+  },
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+}, {
+  timestamps: true, 
+});
 
 
 export const Product = mongoose.model("Product", ProductSchema);
@@ -190,3 +251,6 @@ export const Size = mongoose.model("Size", SizeSchema);
 
 export const ProductVariantImage =mongoose.model("ProductVariantImage", ProductVariantImageSchema);
 export const Color = mongoose.model("Color", ColorSchema);
+
+export const Spec = mongoose.model("Spec", SpecSchema);
+export const Question = mongoose.model("Question", QuestionSchema);

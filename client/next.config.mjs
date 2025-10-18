@@ -9,6 +9,13 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "https://localhost:5000/api",
+      ],
+    },
+  },
 };
 
 export default nextConfig;
