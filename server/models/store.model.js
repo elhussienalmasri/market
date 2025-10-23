@@ -25,15 +25,23 @@ const StoreSchema = new mongoose.Schema(
     },
     averageRating: { type: Number, default: 0 },
     featured: { type: Boolean, default: false },
-    returnPolicy: { type: String, required: true },
-    defaultShippingService: { type: String, default: "" },
+    returnPolicy: {type: String,default: "Return in 30 days." },
+    defaultShippingService: { type: String, default: "International Delivery" },
     defaultShippingFeePerItem: { type: Number, default: 0 },
+    defaultShippingFeeForAdditionalItem: {type: Number,default: 0},
+
     defaultShippingFeeForSecondItem: { type: Number, default: 0 },
     defaultShippingFeePerKg: { type: Number, default: 0 },
     defaultShippingFeeForAll: { type: Number, default: 0 },
-    defaultDeliveryTimeMin: { type: Number, required: true },
-    defaultDeliveryTimeMax: { type: Number, required: true },
+    defaultDeliveryTimeMin: { type: Number, default: 7 },
+    defaultDeliveryTimeMax: { type: Number, default: 31 },
     userId: { type: String, ref: "User", required: true },
+    defaultShippingFeeFixed: {type: Number, default: 0},
+    shippingRates: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ShippingRate',
+      index: true
+    }]
   },
   { timestamps: true }
 );

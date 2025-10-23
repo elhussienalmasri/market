@@ -1,3 +1,5 @@
+import countries from "@/data/countries.json";
+
 export interface DashboardSidebarMenuInterface {
   label: string;
   icon: string;
@@ -124,4 +126,97 @@ export type OfferTag = {
   url: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+
+export type CountryWithShippingRatesType = {
+  countryId: string;
+  countryName: string;
+  shippingRate: ShippingRate;
+};
+
+export interface Country {
+  name: string;
+  code: string;
+  city: string;
+  region: string;
+}
+
+export type SelectMenuOption = (typeof countries)[number];
+
+
+export type VariantSimplified = {
+  variantId: string;
+  variantSlug: string;
+  variantName: string;
+  images: ProductVariantImage[];
+  sizes: Size[];
+};
+
+export type VariantImageType = {
+  url: string;
+  image: string;
+};
+
+export type ProductVariantImage = {
+  id: string;
+  url: string;
+  alt: string;
+  order?: number;
+  productVariantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type ShippingRate = {
+  id: string;
+
+  shippingService: string;
+  shippingFeePerItem: number;
+  shippingFeeForAdditionalItem: number;
+  shippingFeePerKg: number;
+  shippingFeeFixed: number;
+  deliveryTimeMin: number;
+  deliveryTimeMax: number;
+  returnPolicy: string;
+
+  countryId: string;
+  storeId: string;
+
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type Size = {
+  id: string;
+  size: string;
+  quantity: number;
+  price: number;
+  discount: number;
+
+  productVariantId: string;
+
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type StoreDefaultShippingType = {
+  defaultShippingService: string;
+  defaultShippingFeePerItem: number;
+  defaultShippingFeeForAdditionalItem: number;
+  defaultShippingFeePerKg: number;
+  defaultShippingFeeFixed: number;
+  defaultDeliveryTimeMin: number;
+  defaultDeliveryTimeMax: number;
+  returnPolicy: string;
+} | null;
+
+export type ProductType = {
+  id: string;
+  slug: string;
+  name: string;
+  rating: number;
+  sales: number;
+  variants: VariantSimplified[];
+  variantImages: VariantImageType[];
 };

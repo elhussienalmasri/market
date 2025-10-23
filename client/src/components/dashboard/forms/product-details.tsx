@@ -33,8 +33,8 @@ import ImageUpload from "../shared/image-upload";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { upsertProduct } from "@/queries/product";
-import { getAllSubCategoriesForCategory } from "@/queries/category";
+import { upsertProduct } from "@/api/product";
+import { getAllSubCategoriesForCategory } from "@/api/category";
 
 import { WithOutContext as ReactTags } from "react-tag-input";
 

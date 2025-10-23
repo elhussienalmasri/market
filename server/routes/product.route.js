@@ -5,6 +5,7 @@ import {
   getProductMainInfo,
   getAllStoreProducts,
   deleteProduct,
+  getProducts
 } from "../controller/product.controller.js";
 
 import { requireAuth } from "@clerk/express";
@@ -17,5 +18,6 @@ router.get("/:productId/variant/:variantId", getProductVariant);
 router.get("/:productId/info", getProductMainInfo);
 router.get("/:storeUrl", getAllStoreProducts);
 router.delete("/:productId", requireAuth(), deleteProduct);
+router.get('/', getProducts);
 
 export default router;

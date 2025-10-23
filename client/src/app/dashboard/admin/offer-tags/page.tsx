@@ -1,4 +1,4 @@
-import { getAllOfferTags } from '@/queries/offer-tag';
+import { getAllOfferTags } from '@/api/offer-tag';
 
 import DataTable from '@/components/ui/data-table';
 

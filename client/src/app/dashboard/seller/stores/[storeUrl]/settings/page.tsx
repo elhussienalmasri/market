@@ -1,7 +1,7 @@
 
 import StoreDetails from "@/components/dashboard/forms/store-details";
 
-import { fetchStoreByUrl } from "@/queries/store";
+import { fetchStoreByUrl } from "@/api/store";
 import { redirect } from "next/navigation";
 
 export default async function SellerStoreSettingsPage({

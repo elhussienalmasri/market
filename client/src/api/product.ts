@@ -81,3 +81,31 @@ export const deleteProduct = async (productId:string) => {
     throw error;
   }
 };
+
+/**
+ * Fetches products with filters, sorting, and pagination.
+ * 
+ * @param {Object} options - Options for filters and pagination.
+ * @param {number} options.page - Current page number.
+ * @param {number} options.pageSize - Number of products per page.
+ * @param {string} options.sortBy - Sorting option (e.g. "topRated", "newArrivals").
+ * @param {Object} options.filters - Object containing filters like category, brand, color, etc.
+ * @returns {Promise<Object>} The response containing products and pagination info.
+ */
+export const fetchProducts = async ({ page = 1, pageSize = 10, sortBy = '', filters = {} }) => {
+  try {
+    const params = {
+      page,
+      pageSize,
+      sortBy,
+      ...filters
+    };
+
+    const response = await axiosInstance.get(`/product`, { params });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
+  }
+};

@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { upsertOfferTag } from "@/queries/offer-tag";
+import { upsertOfferTag } from "@/api/offer-tag";
 
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";

@@ -35,7 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import ImageUpload from "../shared/image-upload";
 import { useToast } from "@/components/ui/use-toast";
 
-import { upsertStore } from "@/queries/store";
+import { upsertStore } from "@/api/store";
 
 import { useSession } from "@clerk/nextjs";
 

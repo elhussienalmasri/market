@@ -34,7 +34,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/subCategories", subCategoryRoutes);
 
 app.use("/api/product", productRoutes);
-pp.use("/api/offer-tags", offerTagRoutes);
+app.use("/api/offer-tags", offerTagRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server started at http://localhost:${PORT}`);

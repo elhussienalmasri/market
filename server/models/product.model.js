@@ -59,6 +59,10 @@ const ProductSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Question'
     }],
+    sales: {
+      type: Number,
+      default: 0
+    }
   },
   { timestamps: true } 
 );
@@ -125,6 +129,10 @@ const ProductVariantSchema = new mongoose.Schema(
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Spec', // Make sure Spec model is defined and exported
   }],
+    sales: {
+      type: Number,
+      default: 0
+    }
   },
   { timestamps: true } // automatically adds createdAt & updatedAt
 );

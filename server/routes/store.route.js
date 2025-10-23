@@ -1,6 +1,13 @@
 import express from "express";
-import { upsertStore } from "../controller/store.controller.js";
-import {getStoresByUser, getStoreByUrl} from "../controller/store.controller.js"
+import {
+  getStoresByUser,
+  getStoreByUrl,
+  upsertStore,
+  getStoreDefaultShippingDetails,
+  updateStoreDefaultShippingDetails,
+  getStoreShippingRates,
+  upsertShippingRate
+} from "../controller/store.controller.js"
 
 const router = express.Router();
 
@@ -9,5 +16,9 @@ const router = express.Router();
 router.post("/upsert", upsertStore);
 router.get("/:userId", getStoresByUser);
 router.get("/url/:storeUrl", getStoreByUrl);
+router.get('/:storeUrl/shipping-defaults', getStoreDefaultShippingDetails);
+router.put('/:storeUrl/shipping',  updateStoreDefaultShippingDetails);
+router.get('/:storeUrl/shipping-rates',  getStoreShippingRates);
+router.put('/:storeUrl/shipping-rates',  upsertShippingRate);
 
 export default router;

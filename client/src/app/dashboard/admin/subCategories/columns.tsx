@@ -34,8 +34,8 @@ import { useModal } from "@/providers/modal-provider";
 import { BadgeCheck, BadgeMinus, Edit, MoreHorizontal, Trash } from "lucide-react";
 
 
-import { getAllCategories } from "@/queries/category";
-import { deleteSubCategory, getSubCategory } from "@/queries/subCategory";
+import { getAllCategories } from "@/api/category";
+import { deleteSubCategory, getSubCategory } from "@/api/subCategory";
 
 import { ColumnDef } from "@tanstack/react-table";
 

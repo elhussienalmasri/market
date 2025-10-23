@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { currentUser } from "@clerk/nextjs/server";
 
-import { fetchStoresByUser } from "@/queries/store"
+import { fetchStoresByUser } from "@/api/store"
 
 export default async function SellerDashboardPage() {
   // Fetch the current user. If the user is not authenticated, redirect them to the home page.

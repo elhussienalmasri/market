@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ImageUpload from "../shared/image-upload";
 
-import { upsertSubCategory } from "@/queries/subCategory";
+import { upsertSubCategory } from "@/api/subCategory";
 
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";

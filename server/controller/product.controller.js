@@ -194,3 +194,88 @@ export const deleteProduct = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// Retrieves products based on filters (category, size, brand, etc.), returns matching variants with pagination and metadata like total pages and current page.
+export const getProducts = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      pageSize = 10,
+      sortBy = '',
+      ...filters
+    } = req.query;
+
+    const currentPage = parseInt(page);
+    const limit = parseInt(pageSize);
+    const skip = (currentPage - 1) * limit;
+
+    // Construct the base query
+    const query = {};
+
+    //     if (filters.category) {
+    //   query.category = filters.category;
+    // }
+
+    // if (filters.brand) {
+    //   query.brand = filters.brand;
+    // }
+
+    // Get all filtered, sorted products
+    const products = await Product.find(query)
+      .skip(skip)
+      .limit(limit)
+      // .sort(sortOptions)
+      .populate({
+        path: 'variants',
+        populate: [
+          { path: 'sizes' },
+          { path: 'images' },
+          { path: 'colors' },
+        ],
+      })
+      .lean();
+
+    const totalCount = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Transform the products with filtered variants into ProductCardType structure
+    const productsWithFilteredVariants = products.map((product) => {
+      const filteredVariants = product.variants || [];
+
+      const variants = filteredVariants.map((variant) => ({
+        variantId: variant._id,
+        variantSlug: variant.slug,
+        variantName: variant.variantName,
+        images: variant.images,
+        sizes: variant.sizes,
+      }));
+
+      const variantImages = filteredVariants.map((variant) => ({
+        url: `/product/${product.slug}/${variant.slug}`,
+        image: variant.variantImage || (variant.images?.[0]?.url ?? ''),
+      }));
+
+      return {
+        id: product._id,
+        slug: product.slug,
+        name: product.name,
+        rating: product.rating,
+        sales: product.sales,
+        variants,
+        variantImages,
+      };
+    });
+
+    // Return the paginated data along with metadata
+    res.json({
+      products: productsWithFilteredVariants,
+      totalPages,
+      currentPage,
+      pageSize: limit,
+      totalCount,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+                                                                                                                                                                                                                                                                                                                                                                   

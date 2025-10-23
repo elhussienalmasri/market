@@ -36,3 +36,13 @@ export const deleteSubCategory = async (id: string) => {
   const res = await axiosInstance.delete(`/subcategories/${id}`);
   return res.data;
 };
+
+export const getSubcategories = async (limit: number | null,
+  random: boolean = false) => {
+  const res = await axiosInstance.get("/subcategories/limit", {
+    params: {
+      limit,
+      random
+    }});
+  return res.data;
+};

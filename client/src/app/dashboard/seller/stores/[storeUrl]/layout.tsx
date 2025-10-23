@@ -7,7 +7,7 @@ import Sidebar from "@/components/dashboard/sidebar/sidebar";
 
 import { currentUser } from "@clerk/nextjs/server";
 
-import { fetchStoresByUser } from "@/queries/store";
+import { fetchStoresByUser } from "@/api/store";
 
 export default async function SellerStoreDashboardLayout({
   children,

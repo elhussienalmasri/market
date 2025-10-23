@@ -1,5 +1,5 @@
 import SubCategoryDetails from "@/components/dashboard/forms/subCategory-details";
-import { getAllCategories } from "@/queries/category";
+import { getAllCategories } from "@/api/category";
 
 export default async function AdminNewSubCategoryPage() {
   const categories = await getAllCategories();

@@ -34,7 +34,7 @@ import { useModal } from '@/providers/modal-provider';
 
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
 
-import { deleteOfferTag, getOfferTag } from '@/queries/offer-tag';
+import { deleteOfferTag, getOfferTag } from '@/api/offer-tag';
 
 import { ColumnDef } from '@tanstack/react-table';
 

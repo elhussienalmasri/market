@@ -1,6 +1,6 @@
 import ProductDetails from "@/components/dashboard/forms/product-details";
-import { getAllCategories } from "@/queries/category";
-import { getAllOfferTags } from "@/queries/offer-tag";
+import { getAllCategories } from "@/api/category";
+import { getAllOfferTags } from "@/api/offer-tag";
 
 export default async function SellerNewProductPage({
   params,

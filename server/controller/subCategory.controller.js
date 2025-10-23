@@ -98,3 +98,29 @@ export const deleteSubCategory = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+// Takes optional `limit` (number) and `random` (boolean) from the request query to return a list of subcategories, limited or randomly selected.
+export const getSubcategories = async (req, res) => {
+  const { limit, random } = req.query;
+
+  const parsedLimit = parseInt(limit) || null;
+  const isRandom = random === 'true';
+
+  try {
+    if (isRandom) {
+      // Use aggregation pipeline to get random documents
+      const subcategories = await SubCategory.aggregate([
+        { $sample: { size: parsedLimit || 10 } },
+      ]);
+      return res.json(subcategories);
+    }
+
+    // Default sort (by creation date or name)
+    const subcategories = await SubCategory.find()
+      .sort({ createdAt: -1 }) // or use name: 1 if needed
+      .limit(parsedLimit || 0); // 0 = no limit
+
+    res.json(subcategories);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
