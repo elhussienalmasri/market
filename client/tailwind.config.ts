@@ -86,6 +86,12 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      transitionTimingFunction: {
+        "bezier-1": "cubic-bezier(.645,.045,.355,1)",
+      },
+      maxWidth: {
+        conatiner: "1200px",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

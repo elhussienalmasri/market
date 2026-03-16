@@ -109,3 +109,71 @@ export const fetchProducts = async ({ page = 1, pageSize = 10, sortBy = '', filt
     throw error;
   }
 };
+
+export const getProductPageData = async (
+  productSlug: string,
+  variantSlug: string,
+  token: string
+) => {
+  try {
+    const response = await axiosInstance.get(
+      `/product/${productSlug}/${variantSlug}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(error, "error fetching product page data");
+    throw error;
+  }
+};
+
+export const getProductFilteredReviews = async (
+  productId: string,
+  filters?: {
+    rating?: number;
+    hasImages?: boolean;
+    orderBy?: string;
+    page?: number;
+    pageSize?: number;
+  }
+) => {
+
+  try {
+    const response = await axiosInstance.get(`/product/reviews/${productId}`, {
+      params: filters, // automatically adds rating, hasImages, orderBy, page…
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product reviews:", error);
+    throw error;
+  }
+};
+
+export const getProductBySlug = async (
+  productSlug: string,
+  token?: string
+) => {
+  try {
+    const response = await axiosInstance.get(
+      `/products/${productSlug}`,
+      {
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("error fetching product", error);
+    throw error;
+  }
+};

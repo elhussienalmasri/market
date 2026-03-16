@@ -62,7 +62,24 @@ const ProductSchema = new mongoose.Schema(
     sales: {
       type: Number,
       default: 0
-    }
+    },
+    shippingFeeMethod: {
+      type: String,
+      enum: ["ITEM", "WEIGHT", "FIXED"],
+      default: "ITEM"
+    },
+
+    freeShipping: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FreeShipping",
+      required: false,
+    },
+    reviews: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
+      }
+    ],
   },
   { timestamps: true } 
 );
@@ -252,6 +269,65 @@ const QuestionSchema = new mongoose.Schema({
   timestamps: true, 
 });
 
+const ReviewSchema = new mongoose.Schema(
+  {
+    variant: { type: String, required: true },
+    review: { type: String, required: true },
+    rating: { type: Number, required: true },
+    color: { type: String, required: true },
+    size: { type: String, required: true },
+    quantity: { type: String, required: true },
+
+    likes: { type: Number, default: 0 },
+
+    images: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ReviewImage",
+      },
+    ],
+
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true, // single-field index for faster queries
+    },
+
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+      index: true, 
+    },
+  },
+  {
+    timestamps: true, 
+  }
+);
+
+
+const ReviewImageSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+    },
+    alt: {
+      type: String,
+      default: "",
+    },
+    reviewId: {
+      type: mongoose.Schema.Types.ObjectId, // references Review _id
+      ref: "Review",
+      required: true,
+      index: true, 
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 export const Product = mongoose.model("Product", ProductSchema);
 export const ProductVariant = mongoose.model("ProductVariant", ProductVariantSchema);
@@ -262,3 +338,6 @@ export const Color = mongoose.model("Color", ColorSchema);
 
 export const Spec = mongoose.model("Spec", SpecSchema);
 export const Question = mongoose.model("Question", QuestionSchema);
+
+export const Review =   mongoose.model("Review", ReviewSchema);
+export const ReviewImage =   mongoose.model("ReviewImage", ReviewImageSchema);

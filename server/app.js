@@ -11,6 +11,7 @@ import subCategoryRoutes from "./routes/subCategory.route.js";
 import storeRoutes from "./routes/store.route.js";
 import productRoutes from "./routes/product.route.js";
 import offerTagRoutes from "./routes/offerTag.route.js";
+import userRoutes from "./routes/user.route.js";
 
 dotenv.config(); // Load .env file
 
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
   res.send(`Server running on port ${PORT}`);
 });
 
+app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/categories", categoryRoutes);

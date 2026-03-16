@@ -1,10 +1,14 @@
 import { Store } from "../models/store.model.js";
 import slugify from "slugify";
 
-import { Product, Question, Spec } from "../models/product.model.js"
+import { Product, Question, Spec, Review } from "../models/product.model.js"
 
 import { createProductVariant } from "../utils/createProductVariant.js";
 import { generateUniqueSlug } from "../utils/generateUniqueSlug.js";
+
+import {retrieveProductDetails, getShippingDetails, getStoreFollowersCount, checkIfUserFollowingStore, getRatingStatistics} from "../services/product.service.js";
+import {getUserCountry, formatProductResponse} from "../utils/product.utils.js";
+import { User } from "../models/user.model.js";
 
 
 // upsertProduct (create or update product + variant)
@@ -278,4 +282,125 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-                                                                                                                                                                                                                                                                                                                                                                   
+
+export const getProductPageData = async (req, res) => {
+  try {
+    const { productSlug, variantSlug } = req.params;
+    const { userId } = req.auth;
+   
+    const user = await User.findOne({ clerkId: req.auth.userId });
+
+    // Product & variant
+    const product = await retrieveProductDetails(productSlug, variantSlug);
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Country
+    const userCountry = getUserCountry(req);
+
+    // Shipping
+    const productShippingDetails = await getShippingDetails(
+      product.shippingFeeMethod,
+      userCountry,
+      product.storeId,
+      product.freeShipping
+    );
+
+    // Store data
+    const storeFollowersCount = await getStoreFollowersCount(product.storeId);
+    const isUserFollowingStore = await checkIfUserFollowingStore(
+      product.storeId,
+      user._id
+    );
+
+    // Rating stats
+    const ratingStatistics = await getRatingStatistics(product._id);
+
+    // Final response formatting
+    const response = formatProductResponse(
+      product,
+      productShippingDetails,
+      storeFollowersCount,
+      isUserFollowingStore,
+      ratingStatistics
+    );
+
+    return res.json(response);
+  } catch (err) {
+    console.error("Error on getProductPageData:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getProductFilteredReviews = async (
+  productId,
+  filters = {},
+  sort,
+  page = 1,
+  pageSize = 4
+) => {
+  const reviewFilter = {
+    product: productId.params.storeUrl,
+  };
+
+  // Filter by rating
+  if (filters.rating) {
+    const rating = filters.rating;
+    // Include exact rating or half rating [rating, rating+0.5]
+    reviewFilter.rating = { $in: [rating, rating + 0.5] };
+  }
+
+  // Filter by presence of images
+  if (filters.hasImages) {
+    reviewFilter.images = { $exists: true, $not: { $size: 0 } };
+  }
+
+  // Sorting
+  let sortOption = {};
+  if (sort?.orderBy === "latest") sortOption = { createdAt: -1 };
+  else if (sort?.orderBy === "oldest") sortOption = { createdAt: 1 };
+  else sortOption = { rating: -1 }; // default highest rating
+
+  // Pagination
+  const skip = (page - 1) * pageSize;
+  const limit = pageSize;
+
+  // Fetch reviews
+  const reviews = await Review.find(reviewFilter)
+    .populate("user") // populate user details
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+  return reviews;
+};
+
+export const getProductBySlug = async (req, res) => {
+  try {
+    const { productSlug } = req.params;
+
+    const product = await Product.findOne({ slug: productSlug })
+      .populate("variants"); // remove if variants are embedded
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: product,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
