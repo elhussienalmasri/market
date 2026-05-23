@@ -3,31 +3,35 @@ import { ProductWithVariantType } from "@/lib/types";
 
 /**
  * @function upsertProduct
- * 
+ *
  * Creates or updates a product and its associated variant, including images, colors, and sizes.
  * Access Level: Seller Only
- * 
+ *
  * This function checks if the product already exists. If it does, it adds a new variant.
  * If it doesn’t exist, it creates a new product first, then a linked variant.
- * 
+ *
  * Each variant automatically generates related image, color, and size documents
  * and links them using ObjectId references. All documents are stored atomically.
  */
-export const upsertProduct = async ( product: ProductWithVariantType, storeUrl:  string, token:string ) => {
+export const upsertProduct = async (
+  product: ProductWithVariantType,
+  storeUrl: string,
+  token: string,
+) => {
   try {
     const response = await axiosInstance.post(
       `product/upsert/${storeUrl}`,
-      {product},
-      
+      { product },
+
       {
         headers: {
           Authorization: `Bearer ${token}`, // token for Clerk Auth
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
-    console.error("Error upserting product:",  error);
+    console.error("Error upserting product:", error);
     throw error;
   }
 };
@@ -35,9 +39,14 @@ export const upsertProduct = async ( product: ProductWithVariantType, storeUrl: 
 // Function: getProductVariant
 // Description: Fetch details of a specific product variant (Public)
 
-export const getProductVariant = async (productId:string, variantId:string) => {
+export const getProductVariant = async (
+  productId: string,
+  variantId: string,
+) => {
   try {
-    const response = await axiosInstance.get(`/product/${productId}/variant/${variantId}`);
+    const response = await axiosInstance.get(
+      `/product/${productId}/variant/${variantId}`,
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching product variant:", error);
@@ -47,8 +56,7 @@ export const getProductVariant = async (productId:string, variantId:string) => {
 
 // Function: getProductMainInfo
 // Description: Fetch main information of a specific product (Public)
-export const getProductMainInfo = async (productId:string) => {
-
+export const getProductMainInfo = async (productId: string) => {
   try {
     const response = await axiosInstance.get(`/product/${productId}/info`);
     return response.data;
@@ -60,7 +68,7 @@ export const getProductMainInfo = async (productId:string) => {
 
 // Function: getAllStoreProducts
 // Description: Fetch all products for a given store URL (Public)
-export const getAllStoreProducts = async (storeUrl:string) => {
+export const getAllStoreProducts = async (storeUrl: string) => {
   try {
     const response = await axiosInstance.get(`/product/${storeUrl}`);
     return response.data;
@@ -72,7 +80,7 @@ export const getAllStoreProducts = async (storeUrl:string) => {
 
 // Function: deleteProduct
 // Description: Delete a product by ID (Seller only)
-export const deleteProduct = async (productId:string) => {
+export const deleteProduct = async (productId: string) => {
   try {
     const response = await axiosInstance.delete(`/${productId}`);
     return response.data;
@@ -84,7 +92,7 @@ export const deleteProduct = async (productId:string) => {
 
 /**
  * Fetches products with filters, sorting, and pagination.
- * 
+ *
  * @param {Object} options - Options for filters and pagination.
  * @param {number} options.page - Current page number.
  * @param {number} options.pageSize - Number of products per page.
@@ -92,20 +100,25 @@ export const deleteProduct = async (productId:string) => {
  * @param {Object} options.filters - Object containing filters like category, brand, color, etc.
  * @returns {Promise<Object>} The response containing products and pagination info.
  */
-export const fetchProducts = async ({ page = 1, pageSize = 10, sortBy = '', filters = {} }) => {
+export const fetchProducts = async ({
+  page = 1,
+  pageSize = 10,
+  sortBy = "",
+  filters = {},
+}) => {
   try {
     const params = {
       page,
       pageSize,
       sortBy,
-      ...filters
+      ...filters,
     };
 
     const response = await axiosInstance.get(`/product`, { params });
 
     return response.data;
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     throw error;
   }
 };
@@ -113,7 +126,7 @@ export const fetchProducts = async ({ page = 1, pageSize = 10, sortBy = '', filt
 export const getProductPageData = async (
   productSlug: string,
   variantSlug: string,
-  token: string
+  token: string,
 ) => {
   try {
     const response = await axiosInstance.get(
@@ -122,7 +135,7 @@ export const getProductPageData = async (
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     return response.data;
@@ -140,14 +153,13 @@ export const getProductFilteredReviews = async (
     orderBy?: string;
     page?: number;
     pageSize?: number;
-  }
+  },
 ) => {
-
   try {
     const response = await axiosInstance.get(`/product/reviews/${productId}`, {
       params: filters, // automatically adds rating, hasImages, orderBy, page…
     });
-    
+
     return response.data;
   } catch (error) {
     console.error("Error fetching product reviews:", error);
@@ -155,25 +167,67 @@ export const getProductFilteredReviews = async (
   }
 };
 
-export const getProductBySlug = async (
-  productSlug: string,
-  token?: string
-) => {
+export const getProductBySlug = async (productSlug: string, token?: string) => {
   try {
-    const response = await axiosInstance.get(
-      `/products/${productSlug}`,
-      {
-        headers: token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : undefined,
-      }
-    );
+    const response = await axiosInstance.get(`/products/${productSlug}`, {
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : undefined,
+    });
 
     return response.data;
   } catch (error) {
     console.error("error fetching product", error);
     throw error;
+  }
+};
+
+/**
+ * Calculates the shipping fee for a product based on shipping method, user country, store settings, weight, quantity, and free shipping rules.
+ *
+ * @param {string} shippingFeeMethod - The shipping calculation method (ITEM, WEIGHT, or FIXED).
+ * @param {Object} userCountry - The user's country information (name and code).
+ * @param {Object} store - Store details including default shipping fee settings.
+ * @param {Object|null} freeShipping - Optional free shipping configuration with eligible countries.
+ * @param {number} weight - The total weight of the product.
+ * @param {number} quantity - The number of items being purchased.
+ * @returns {Promise<number>} The calculated shipping fee for the product.
+ */
+
+export const fetchShippingFee = async ({
+  shippingFeeMethod,
+  countryName,
+  countryCode,
+  storeId,
+  weight,
+  quantity,
+}: {
+  shippingFeeMethod: "ITEM" | "WEIGHT" | "FIXED";
+  countryName: string;
+  countryCode: string;
+  storeId: string;
+  weight: number;
+  quantity: number;
+}): Promise<number> => {
+  try {
+    const { data } = await axiosInstance.get("/product/shipping-fee", {
+      params: {
+        shippingFeeMethod,
+        countryName,
+        countryCode,
+        storeId,
+        weight,
+        quantity,
+      },
+    });
+
+    return data.shippingFee as number;
+  } catch (error: any) {
+    console.error("Shipping API error:", error);
+    throw new Error(
+      error?.response?.data?.message || "Failed to fetch shipping fee",
+    );
   }
 };

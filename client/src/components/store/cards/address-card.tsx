@@ -40,10 +40,13 @@ const ShippingAddressCard: FC<Props> = ({
         alert("You are not logged in");
         return;
       }
-      const response = await upsertShippingAddress({
-        ...newAddress,
-        default: true,
-      },token);
+      const response = await upsertShippingAddress(
+        {
+          ...newAddress,
+          default: true,
+        },
+        token,
+      );
       if (response) {
         toast.success("New Default Address saved.");
         router.refresh();
@@ -68,7 +71,7 @@ const ShippingAddressCard: FC<Props> = ({
               {
                 "bg-orange-background border-none flex items-center justify-center":
                   isSelected,
-              }
+              },
             )}
           >
             {isSelected && <Check className="stroke-white w-3" />}
@@ -92,7 +95,7 @@ const ShippingAddressCard: FC<Props> = ({
         </div>
         {/* State - City - Country - Zipcode */}
         <div className="text-sm max-w-[90%] text-gray-600 leading-4 overflow-hidden text-ellipsis whitespace-nowrap">
-          {address.state}, {address.city}, {address.country.name},&nbsp;
+          {address.state}, {address.city}, {address.country},&nbsp;
           {address.zip_code}
         </div>
         {/* Save as default - Edit */}

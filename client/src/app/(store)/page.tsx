@@ -1,5 +1,6 @@
 import ProductList from "@/components/store/shared/product-list";
-
+import CategoriesHeader from "@/components/store/layout/categories-header/categories-header";
+import Header from "@/components/store/layout/header/header";
 import { fetchProducts } from "@/api/product";
 
 export default async function HomePage() {
@@ -9,8 +10,12 @@ export default async function HomePage() {
   filters: {},});
   const { products } = productsData;
   return (
-    <div className="p-14">
+    <div>
+      <Header />
+      <CategoriesHeader />
+      <div className="p-14">
       <ProductList products={products} title="Products" arrow />
+    </div>
     </div>
   );
 }

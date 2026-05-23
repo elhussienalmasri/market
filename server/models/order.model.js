@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
 export const OrderStatus = [
   "Pending",
@@ -24,6 +25,23 @@ export const PaymentStatus = [
   "Refunded",
   "PartiallyRefunded",
   "Chargeback",
+];
+
+export const ProductStatus = [
+  "Pending",
+  "Processing",
+  "ReadyForShipment",
+  "Shipped",
+  "Delivered",
+  "Canceled",
+  "Returned",
+  "Refunded",
+  "FailedDelivery",
+  "OnHold",
+  "Backordered",
+  "PartiallyShipped",
+  "ExchangeRequested",
+  "AwaitingPickup",
 ];
 
 const OrderSchema = new mongoose.Schema(
@@ -66,10 +84,21 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    paymentMethod: {
+      type: String,
+      enum: ["Paypal", "Stripe"],
+      default: null,
+    },
+
+    paymentDetails: {
+      type: Schema.Types.ObjectId,
+      ref: "PaymentDetails",
+      default: null,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const OrderGroupSchema = new mongoose.Schema(
@@ -110,10 +139,16 @@ const OrderGroupSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    couponId: {
+      type: Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const OrderItemSchema = new mongoose.Schema(
@@ -133,19 +168,79 @@ const OrderItemSchema = new mongoose.Schema(
     shippingFee: { type: Number, default: 0 },
     price: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
-    
+
     orderGroupId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderGroup",
       required: true,
       index: true, // corresponds to @@index([orderGroupId])
     },
+    status: {
+      type: String,
+      enum: Object.values(ProductStatus),
+      default: ProductStatus.Pending,
+    },
   },
   {
     timestamps: true,
-  }
+  },
+);
+
+const paymentDetailsSchema = new Schema(
+  {
+    paymentInetntId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    paymentMethod: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    status: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    amount: {
+      type: Number,
+      required: true,
+    },
+
+    currency: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    orderId: {
+      type: Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
 );
 
 export const Order = mongoose.model("Order", OrderSchema);
 export const OrderGroup = mongoose.model("OrderGroup", OrderGroupSchema);
 export const OrderItem = mongoose.model("OrderItem", OrderItemSchema);
+export const PaymentDetails = mongoose.model(
+  "PaymentDetails",
+  paymentDetailsSchema,
+);

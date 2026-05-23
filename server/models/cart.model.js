@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
 const CartSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
       unique: true,
@@ -29,6 +30,12 @@ const CartSchema = new mongoose.Schema(
     total: {
       type: Number,
       required: true,
+    },
+    couponId: {
+      type: Schema.Types.ObjectId,
+      ref: "Coupon",
+      default: null,
+      index: true,
     },
   },
   {

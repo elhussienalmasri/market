@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
 //  Enum equivalent for StoreStatus
 const StoreStatus = {
@@ -60,7 +61,13 @@ const StoreSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "OrderGroup"   
     }
-  ]
+  ],
+    coupons: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Coupon",
+      },
+    ],
   },
   { timestamps: true }
 );

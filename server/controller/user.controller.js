@@ -1,13 +1,15 @@
 import { Store } from "../models/store.model.js";
 import { User } from "../models/user.model.js";
-import { Cart } from "../models/cart.model.js";
-import { Product } from "../models/product.model.js";
+import { Cart, CartItem } from "../models/cart.model.js";
+import { Product, ProductVariant } from "../models/product.model.js";
 import { ShippingAddress } from "../models/user.model.js";
 import { Order, OrderGroup, OrderItem } from "../models/order.model.js";
 
 import { getShippingDetails } from "../services/product.service.js";
 import { calculateShippingFee } from "../utils/product.utils.js";
-import { Country } from "../models/country.model.js"
+import { Country } from "../models/country.model.js";
+import Wishlist  from "../models/wishlist.model.js";
+import {updateCartWithLatest} from "../services/cart.service.js";
 
 export const followStoreController = async (req, res) => {
   try {
@@ -180,13 +182,24 @@ export const saveUserCart = async (req, res) => {
     const total = subTotal + shippingFees;
 
     // Save new cart
-    const cart = new Cart({
+    const cart = await Cart.create({
       userId,
-      cartItems: validatedCartItems,
+      cartItems: [],
       subTotal,
       shippingFees,
       total,
     });
+
+    // Create CartItem documents
+    const createdCartItems = await CartItem.insertMany(
+      validatedCartItems.map((item) => ({
+        ...item,
+        cartId: cart._id,
+      }))
+    );
+
+    // Save only ObjectIds in cartItems
+    cart.cartItems = createdCartItems.map((item) => item._id);
 
     await cart.save();
 
@@ -203,8 +216,8 @@ export const getUserShippingAddresses = async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
 
     const shippingAddresses = await ShippingAddress.find({ userId: user._id })
-      .populate("country");
-
+      .populate("countryId");
+ 
     return res.json(shippingAddresses);
 
   } catch (error) {
@@ -234,7 +247,7 @@ export const upsertShippingAddress = async (req, res) => {
     // Upsert logic
     const upsertedAddress = await ShippingAddress.findOneAndUpdate(
       { _id: id },                     // match existing
-      { ...address, userId: user._id }, // new values
+      { ...address, userId: userId }, // new values
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
@@ -455,6 +468,229 @@ export const getCountries = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const updateCart = async (req, res) => {
+  try {
+    const { cartProducts } = req.body;
+
+    if (!cartProducts || !Array.isArray(cartProducts)) {
+      return res.status(400).json({ message: "Invalid cart data" });
+    }
+
+    const userCountry = req.userCountry; // from middleware or cookie parser
+
+    const updatedCart = await updateCartWithLatest(
+      cartProducts,
+      userCountry
+    );
+
+    return res.json({
+      success: true,
+      cart: updatedCart,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+/**
+ * Add a product to the user's wishlist.
+ * Ensures the user is authenticated and prevents duplicate wishlist entries.
+ *
+ * @param {Object} req - Express request object containing product details in body and user in auth middleware.
+ * @param {Object} res - Express response object.
+ * @returns {Object} The created wishlist item.
+ */
+export const addToWishlist = async (req, res) => {
+  try {
+    const { userId } = req.auth; /
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthenticated",
+      });
+    }
+
+    const { productId, variantId, sizeId } = req.body;
+
+    if (!productId || !variantId) {
+      return res.status(400).json({
+        success: false,
+        message: "productId and variantId are required",
+      });
+    }
+
+    const existingWishlistItem = await Wishlist.findOne({
+      userId,
+      productId,
+      variantId,
+    });
+
+    if (existingWishlistItem) {
+      return res.status(400).json({
+        success: false,
+        message: "Product is already in the wishlist",
+      });
+    }
+
+    const wishlistItem = await Wishlist.create({
+      userId,
+      productId,
+      variantId,
+      sizeId: sizeId || null,
+    });
+
+    return res.status(201).json({
+      success: true,
+      wishlist: wishlistItem,
+    });
+  } catch (error) {
+    console.error("Wishlist error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+/**
+ * Updates checkout products with latest DB values (price, stock, shipping, totals).
+ */
+export const updateCheckoutProductstWithLatest = async (req, res) => {
+
+  try {
+    const { cartProducts, country } = req.body;
+    // VALIDATION
+    if (!Array.isArray(cartProducts) || cartProducts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cart products are required",
+      });
+    }
+
+    if (!country) {
+      return res.status(400).json({
+        success: false,
+        message: "Country is required",
+      });
+    }
+
+    // GET UNIQUE PRODUCT IDS
+    const productIds = [
+      ...new Set(cartProducts.map((item) => item.productId)),
+    ];
+
+    // FETCH PRODUCTS ONCE
+    const products = await Product.find({
+      _id: { $in: productIds },
+    })
+      .populate("storeId")
+      .populate({
+        path: "freeShipping",
+        populate: {
+          path: "eligibleCountries",
+        },
+      });
+
+    // CREATE PRODUCT MAP
+    const productMap = new Map(
+      products.map((product) => [product._id.toString(), product])
+    );
+
+    // VALIDATE CART ITEMS
+    const validatedCartItems = await Promise.all(
+      cartProducts.map(async (cartProduct) => {
+        const { productId, variantId, sizeId, quantity } = cartProduct;
+
+        // QUANTITY VALIDATION
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+          throw new Error("Invalid quantity");
+        }
+
+        const product = productMap.get(productId);
+
+        if (!product) {
+          throw new Error(`Invalid product ${productId}`);
+        }
+
+        const variant = product.variants.find(
+          (v) => v._id.toString() === variantId
+        );
+
+        const variantDoc = await ProductVariant.findById(variantId);
+
+        const size = variantDoc?.sizes?.find(
+          (s) => String(s) === String(sizeId)
+        );
+
+        if (!variant || !size) {
+          throw new Error("Invalid variant or size");
+        }
+
+        // AVAILABLE QUANTITY
+        const validatedQty = Math.min(quantity, size.quantity);
+
+        // PRICE
+        const price = size.discount
+          ? size.price - (size.price * size.discount) / 100
+          : size.price;
+
+
+        const shippingDetails = await getShippingDetails(product.shippingFeeMethod, country, product.storeId, product.freeShipping);
+
+        // SHIPPING
+        const shippingFee = await calculateShippingFee(product.shippingFeeMethod, shippingDetails, quantity, variant.weight);
+
+        // TOTAL
+        const totalPrice = Number(
+          (price * validatedQty + shippingFee).toFixed(2)
+        );
+
+        return {
+          ...cartProduct,
+          name: `${product.name} · ${variant.variantName}`,
+          image: variant.images?.[0]?.url || null,
+          price,
+          quantity: validatedQty,
+          shippingFee,
+          totalPrice,
+          storeId: product.store?._id || null,
+        };
+      })
+    );
+
+    // TOTALS
+    const subTotal = validatedCartItems.reduce(
+      (acc, item) => acc + item.price * item.quantity,
+      0
+    );
+
+    const shippingFees = validatedCartItems.reduce(
+      (acc, item) => acc + item.shippingFee,
+      0
+    );
+
+    const total = Number((subTotal + shippingFees).toFixed(2));
+
+    return res.status(200).json({
+      success: true,
+      cartItems: validatedCartItems,
+      subTotal,
+      shippingFees,
+      total,
+    });
+  } catch (error) {
+    console.error("Checkout validation error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
     });
   }
 };

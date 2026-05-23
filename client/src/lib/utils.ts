@@ -1,13 +1,13 @@
-
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import ColorThief from "colorthief";
-import {CartProductType, Country } from "./types";
+import { CartProductType, Country } from "./types";
 import countries from "@/data/countries.json";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 // Helper function to grid grid classnames dependng on length
@@ -69,7 +69,7 @@ export async function getUserCountry(): Promise<Country> {
   try {
     // Attempt to detect country by IP
     const response = await fetch(
-      `https://ipinfo.io/?token=${process.env.IPINFO_TOKEN}`
+      `https://ipinfo.io/?token=${process.env.IPINFO_TOKEN}`,
     );
 
     if (response.ok) {
@@ -100,7 +100,7 @@ export async function getUserCountry(): Promise<Country> {
 
 export const getShippingDatesRange = (
   minDays: number,
-  maxDays: number
+  maxDays: number,
 ): { minDate: string; maxDate: string } => {
   const currentDate = new Date();
 
@@ -151,8 +151,8 @@ export const isProductValidToAdd = (product: CartProductType): boolean => {
     !image ||
     quantity <= 0 ||
     price <= 0 ||
-    !sizeId || 
-    !size || 
+    !sizeId ||
+    !size ||
     stock <= 0 ||
     weight <= 0 ||
     !shippingMethod ||
@@ -194,3 +194,18 @@ export function censorName(firstName: string, lastName: string): CensorReturn {
     fullName: censoredFullName,
   };
 }
+
+export const getTimeUntil = (
+  targetDate: string,
+): { days: number; hours: number } => {
+  // Convert the date string to a Date object
+  const target = new Date(targetDate);
+  const now = new Date();
+
+  if (target <= now) return { days: 0, hours: 0 };
+
+  const totalDays = differenceInDays(target, now);
+  const totalHours = differenceInHours(target, now) % 24;
+
+  return { days: totalDays, hours: totalHours };
+};

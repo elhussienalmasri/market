@@ -8,7 +8,8 @@ import {
   getProducts,
   getProductPageData,
   getProductFilteredReviews,
-  getProductBySlug
+  getProductBySlug,
+  getProductShippingFee
 } from "../controller/product.controller.js";
 
 import { requireAuth } from "@clerk/express";
@@ -26,5 +27,6 @@ router.delete("/:productId", requireAuth(), deleteProduct);
 router.get("/:productSlug/:variantSlug", getProductPageData);
 router.get("/:productSlug", getProductBySlug);
 router.get('/', getProducts);
+router.get("/shipping-fee", getProductShippingFee);
 
 export default router;

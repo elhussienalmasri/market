@@ -7,7 +7,10 @@ import {
   placeOrder,
   emptyUserCart,
   getUserCart,
-  getCountries
+  getCountries,
+  updateCart,
+  addToWishlist,
+  updateCheckoutProductstWithLatest
 } from "../controller/user.controller.js";
 
 
@@ -24,14 +27,14 @@ router.post("/follow-store", requireAuth(), followStore);
 // CART ROUTES
 // -----------------------
 router.get("/cart", getUserCart);
-router.post("/cart/save", requireAuth, saveUserCart);
+router.post("/cart/save", saveUserCart);
 router.delete("/cart/empty", requireAuth, emptyUserCart);
 
 // -----------------------
 // SHIPPING ADDRESS ROUTES
 // -----------------------
-router.get("/shipping-addresses", requireAuth, getUserShippingAddresses);
-router.post("/shipping-addresses/upsert", requireAuth, upsertShippingAddress);
+router.get("/shipping-addresses", getUserShippingAddresses);
+router.post("/shipping-addresses/upsert", upsertShippingAddress);
 
 // -----------------------
 // PLACE ORDER
@@ -39,6 +42,10 @@ router.post("/shipping-addresses/upsert", requireAuth, upsertShippingAddress);
 router.post("/order/place", requireAuth, placeOrder);
 
 router.get("/countries", getCountries);
+
+router.post("/cart/update", updateCart);
+router.post("/wishlist", addToWishlist);
+router.post("/checkout/update",  updateCheckoutProductstWithLatest);
 
 
 export default router;

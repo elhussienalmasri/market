@@ -1,5 +1,5 @@
-
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -80,6 +80,12 @@ const ProductSchema = new mongoose.Schema(
         ref: "Review",
       }
     ],
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Wishlist",
+      },
+    ],
   },
   { timestamps: true } 
 );
@@ -149,7 +155,13 @@ const ProductVariantSchema = new mongoose.Schema(
     sales: {
       type: Number,
       default: 0
-    }
+    },
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Wishlist",
+      },
+    ],
   },
   { timestamps: true } // automatically adds createdAt & updatedAt
 );
@@ -179,6 +191,12 @@ const SizeSchema = new mongoose.Schema(
       ref: "ProductVariant",
       index: true,
     },
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Wishlist",
+      },
+    ],
   },
   { timestamps: true } // Adds createdAt and updatedAt
 );

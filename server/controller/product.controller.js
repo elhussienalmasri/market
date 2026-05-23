@@ -404,3 +404,84 @@ export const getProductBySlug = async (req, res) => {
     });
   }
 };
+
+// Function: getProductShippingFee
+// Description: Express route handler that calculates shipping fee for a product based on user country, store settings, shipping method, weight, quantity, and free shipping rules.
+// Access Level: Public
+// Method: GET
+// Query Params:
+//   - shippingFeeMethod: ITEM | WEIGHT | FIXED
+//   - countryName: user's country name
+//   - countryCode: user's country code
+//   - storeId: store ID
+//   - weight: product weight
+//   - quantity: product quantity
+// Returns: shipping fee calculation result
+export const getProductShippingFee = async (req, res) => {
+  try {
+    const {
+      shippingFeeMethod,
+      countryName,
+      countryCode,
+      storeId,
+      weight = 0,
+      quantity = 1,
+    } = req.query;
+
+    if (!shippingFeeMethod || !countryName || !countryCode || !storeId) {
+      return res.status(400).json({
+        message: "Missing required query parameters",
+      });
+    }
+
+    const country = await Country.findOne({
+      name: countryName,
+      code: countryCode,
+    });
+
+    if (!country) {
+      return res.json({ shippingFee: 0 });
+    }
+
+    const store = { _id: storeId };
+
+    const shippingRate = await ShippingRate.findOne({
+      countryId: country._id,
+      storeId: store._id,
+    });
+
+    const {
+      shippingFeePerItem = 0,
+      shippingFeeForAdditionalItem = 0,
+      shippingFeePerKg = 0,
+      shippingFeeFixed = 0,
+    } = shippingRate || {};
+
+    const additionalItemsQty = Math.max(Number(quantity) - 1, 0);
+
+    const feeCalculators = {
+      ITEM: () =>
+        shippingFeePerItem +
+        shippingFeeForAdditionalItem * additionalItemsQty,
+
+      WEIGHT: () => shippingFeePerKg * Number(weight) * Number(quantity),
+
+      FIXED: () => shippingFeeFixed,
+    };
+
+    const calculateFee = feeCalculators[shippingFeeMethod];
+
+    const shippingFee = calculateFee ? calculateFee() : 0;
+
+    return res.json({
+      success: true,
+      shippingFee,
+    });
+  } catch (error) {
+    console.error("Shipping fee error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

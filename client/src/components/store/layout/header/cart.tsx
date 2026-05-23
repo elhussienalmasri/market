@@ -1,9 +1,11 @@
+"use client";
 import Link from "next/link";
 import { CartIcon } from "@/components/store/icons";
+import { useCartStore } from "@/cart-store/useCartStore";
 
 export default function Cart() {
   // Get total items in the cart
-  const totalItems = 5;
+  const totalItems = useCartStore((state) => state.totalItems);
   return (
     <div className="relative flex h-11 items-center px-2 cursor-pointer">
       <Link href="/cart" className="flex items-center text-white">

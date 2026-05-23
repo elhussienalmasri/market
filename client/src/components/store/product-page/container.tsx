@@ -30,7 +30,7 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
     useState<ProductVariantImage[]>(images);
 
   const [activeImage, setActiveImage] = useState<ProductVariantImage | null>(
-    images[0]
+    images[0],
   );
 
   // Initialize the default product data for the cart item
@@ -80,7 +80,41 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
   // Get the store action to add items to cart
   const addToCart = useCartStore((state) => state.addToCart);
 
+  // Get the set Cart action to update items in cart
+  const setCart = useCartStore((state) => state.setCart);
+
   const cartItems = useFromStore(useCartStore, (state) => state.cart);
+
+  // Keeping cart state updated
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      // Check if the "cart" key was changed in localStorage
+      if (event.key === "cart") {
+        try {
+          const parsedValue = event.newValue
+            ? JSON.parse(event.newValue)
+            : null;
+
+          // Check if parsedValue and state are valid and then update the cart
+          if (
+            parsedValue &&
+            parsedValue.state &&
+            Array.isArray(parsedValue.state.cart)
+          ) {
+            setCart(parsedValue.state.cart);
+          }
+        } catch (error) {
+          console.error("Failed to parse updated cart data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   const handleAddToCart = () => {
     if (maxQty <= 0) return;
@@ -93,7 +127,7 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
       (p) =>
         p.productId === productId &&
         p.variantId === variantId &&
-        p.sizeId === sizeId
+        p.sizeId === sizeId,
     );
     return search_product
       ? search_product.stock - search_product.quantity
@@ -166,7 +200,7 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
                       "relative w-full py-2.5 min-w-20 bg-orange-border hover:bg-[#e4cdce] text-orange-hover h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none",
                       {
                         "cursor-not-allowed": !isProductValid || maxQty <= 0,
-                      }
+                      },
                     )}
                     onClick={() => handleAddToCart()}
                   >

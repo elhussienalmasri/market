@@ -11,6 +11,9 @@ const buttonVariants = cva(
       variant: {
         default: "bg-orange-background hover:bg-orange-hover",
         black: "bg-black",
+        pink: "bg-[#ffe6e7] text-orange-background hover:bg-[#e4cdce] hover:text-white",
+        outline:
+          "bg-transparent hover:bg-orange-background hover:text-white text-orange-background rounded-md border-orange-background px-2 !h-7 text-sm font-normal",
       },
       size: {
         default: "h-11 py-2",

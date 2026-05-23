@@ -14,6 +14,7 @@ interface Actions {
   removeMultipleFromCart: (items: CartProductType[]) => void; // Multiple products removal
   removeFromCart: (Item: CartProductType) => void; // Single product removal
   emptyCart: () => void; // Empty cart
+  setCart: (newCart: CartProductType[]) => void; // Added setCart method
 }
 
 // Initialize a default state
@@ -33,20 +34,20 @@ export const useCartStore = create(
       addToCart: (product: CartProductType) => {
         if (!product) return;
         const cart = get().cart;
+        // If product already exists in cart
         const cartItem = cart.find(
           (item) =>
             item.productId === product.productId &&
             item.variantId === product.variantId &&
-            item.sizeId === product.sizeId
+            item.sizeId === product.sizeId,
         );
-        
         if (cartItem) {
           const updatedCart = cart.map((item) =>
             item.productId === product.productId &&
-              item.variantId === product.variantId &&
-              item.sizeId === product.sizeId
+            item.variantId === product.variantId &&
+            item.sizeId === product.sizeId
               ? { ...item, quantity: item.quantity + product.quantity }
-              : item
+              : item,
           );
           set((state) => ({
             cart: updatedCart,
@@ -72,16 +73,16 @@ export const useCartStore = create(
 
         const updatedCart = cart.map((item) =>
           item.productId === product.productId &&
-            item.variantId === product.variantId &&
-            item.sizeId === product.sizeId
+          item.variantId === product.variantId &&
+          item.sizeId === product.sizeId
             ? { ...item, quantity }
-            : item
+            : item,
         );
 
         const totalItems = updatedCart.length;
         const totalPrice = updatedCart.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         );
         set(() => ({
           cart: updatedCart,
@@ -97,23 +98,45 @@ export const useCartStore = create(
               item.productId === product.productId &&
               item.variantId === product.variantId &&
               item.sizeId === product.sizeId
-            )
+            ),
         );
         const totalItems = updatedCart.length;
         const totalPrice = updatedCart.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         );
         set(() => ({
           cart: updatedCart,
           totalItems,
           totalPrice,
         }));
+
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
       },
       removeMultipleFromCart: (products: CartProductType[]) => {
-        products.forEach((product) => {
-          get().removeFromCart(product);
-        });
+        const cart = get().cart;
+        const updatedCart = cart.filter(
+          (item) =>
+            !products.some(
+              (product) =>
+                product.productId === item.productId &&
+                product.variantId === item.variantId &&
+                product.sizeId === item.sizeId,
+            ),
+        );
+        const totalItems = updatedCart.length;
+        const totalPrice = updatedCart.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0,
+        );
+
+        set(() => ({
+          cart: updatedCart,
+          totalItems,
+          totalPrice,
+        }));
+
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
       },
       emptyCart: () => {
         set(() => ({
@@ -121,10 +144,24 @@ export const useCartStore = create(
           totalItems: 0,
           totalPrice: 0,
         }));
+
+        localStorage.removeItem("cart");
+      },
+      setCart: (newCart: CartProductType[]) => {
+        const totalItems = newCart.length;
+        const totalPrice = newCart.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0,
+        );
+        set(() => ({
+          cart: newCart,
+          totalItems,
+          totalPrice,
+        }));
       },
     }),
     {
       name: "cart",
-    }
-  )
+    },
+  ),
 );

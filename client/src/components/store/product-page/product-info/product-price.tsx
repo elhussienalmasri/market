@@ -25,11 +25,11 @@ const ProductPrice: FC<Props> = ({ sizeId, sizes, isCard, handleChange }) => {
   if (!sizeId) {
     // Calculate discounted prices for all sizes
     const discountedPrices = sizes.map(
-      (size) => size.price * (1 - size.discount / 100)
+      (size) => size.price * (1 - size.discount / 100),
     );
     const totalQuantity = sizes.reduce(
       (total, size) => total + size.quantity,
-      0
+      0,
     );
 
     const minPrice = Math.min(...discountedPrices).toFixed(2);
@@ -104,7 +104,13 @@ const ProductPrice: FC<Props> = ({ sizeId, sizes, isCard, handleChange }) => {
           {selectedSize.discount}% off
         </span>
       )}
-      <p className="mt-2 text-xs">{selectedSize.quantity} pieces</p>
+      <p className="mt-2 text-xs">
+        {selectedSize.quantity > 0 ? (
+          `${selectedSize.quantity} items`
+        ) : (
+          <span className="text-red-500">Out of stock</span>
+        )}
+      </p>
     </div>
   );
 };

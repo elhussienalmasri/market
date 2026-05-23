@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const { Schema } = mongoose;
 
 const userSchema = new mongoose.Schema(
 	{
@@ -15,6 +16,81 @@ const userSchema = new mongoose.Schema(
 			required: true,
 			unique: true,
 		},
+
+    picture: {
+      type: String,
+      required: true,
+    },
+
+    role: {
+      type: String,
+      enum: ["USER", "ADMIN"],
+      default: "USER",
+    },
+
+    // Relations
+    stores: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Store",
+      },
+    ],
+
+    following: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Store",
+      },
+    ],
+
+    reviews: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Review",
+      },
+    ],
+
+    cart: {
+      type: Schema.Types.ObjectId,
+      ref: "Cart",
+      default: null,
+    },
+
+    shippingAddresses: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "ShippingAddress",
+      },
+    ],
+
+    orders: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Order",
+      },
+    ],
+
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Wishlist",
+      },
+    ],
+
+    payments: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "PaymentDetails",
+      },
+    ],
+
+    coupons: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Coupon",
+      },
+    ],
+    
 	},
 	{ timestamps: true } //  createdAt, updatedAt
 );
@@ -33,7 +109,7 @@ const ShippingAddressSchema = new mongoose.Schema(
 
     // Reference to User
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
       index: true, // corresponds to @@index([userId])

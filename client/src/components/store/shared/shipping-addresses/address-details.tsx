@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { upsertShippingAddress } from "@/api/user";
-import { v4 } from "uuid";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Button } from "../../ui/button";
@@ -42,7 +41,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
   const { session } = useSession();
   const form = useForm<z.infer<typeof ShippingAddressSchema>>({
     mode: "onChange",
-    resolver: zodResolver(ShippingAddressSchema),
+    // resolver: zodResolver(ShippingAddressSchema),
     defaultValues: {
       firstName: data?.firstName,
       lastName: data?.lastName,
@@ -84,7 +83,6 @@ const AddressDetails: FC<AddressDetailsProps> = ({
       }
 
       const response = await upsertShippingAddress({
-        id: data?.id ? data.id : v4(),
         firstName: values.firstName,
         lastName: values.lastName,
         phone: values.phone,
@@ -117,7 +115,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
   };
 
   const handleCountryChange = (name: string) => {
-    const country = countries.find((c) => c.name === name);
+    const country = countries.data.find((c) => c.name === name);
     if (country) {
       form.setValue("countryId", country._id);
     }
@@ -132,7 +130,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
             <FormLabel>Contact information</FormLabel>
             <div className="flex items-center justify-between gap-3">
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
@@ -145,7 +143,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
                 )}
               />
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
@@ -159,7 +157,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
               />
             </div>
             <FormField
-              disabled={isLoading}
+              // disabled={isLoading}
               control={form.control}
               name="phone"
               render={({ field }) => (
@@ -176,7 +174,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
             <FormLabel>Address</FormLabel>
             <div>
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="countryId"
                 render={({ field }) => (
@@ -188,9 +186,9 @@ const AddressDetails: FC<AddressDetailsProps> = ({
                         onToggle={() => setIsOpen((prev) => !prev)}
                         onChange={(val) => handleCountryChange(val)}
                         selectedValue={
-                          (countries.find(
+                          (countries.data.find(
                             (c) => c.name === country
-                          ) as SelectMenuOption) || countries[0]
+                          ) as SelectMenuOption) || countries.data[0]
                         }
                       />
                     </FormControl>
@@ -201,7 +199,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
             </div>
             <div className="!mt-3 flex items-center justify-between gap-3">
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="address1"
                 render={({ field }) => (
@@ -217,7 +215,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
                 )}
               />
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="address2"
                 render={({ field }) => (
@@ -236,7 +234,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
 
             <div className="!mt-3 flex items-center justify-between gap-3">
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="state"
                 render={({ field }) => (
@@ -249,7 +247,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
                 )}
               />
               <FormField
-                disabled={isLoading}
+                // disabled={isLoading}
                 control={form.control}
                 name="city"
                 render={({ field }) => (
@@ -263,7 +261,7 @@ const AddressDetails: FC<AddressDetailsProps> = ({
               />
             </div>
             <FormField
-              disabled={isLoading}
+              // disabled={isLoading}
               control={form.control}
               name="zip_code"
               render={({ field }) => (
