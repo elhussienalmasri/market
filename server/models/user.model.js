@@ -119,7 +119,7 @@ const ShippingAddressSchema = new mongoose.Schema(
     countryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Country",
-      required: true,
+      // required: true,
       index: true, // corresponds to @@index([countryId])
     },
 

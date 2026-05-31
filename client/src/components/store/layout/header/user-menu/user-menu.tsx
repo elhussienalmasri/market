@@ -20,7 +20,7 @@ export default async function UserMenu() {
             alt={user.fullName!}
             width={40}
             height={40}
-            className="rounded-full"
+            className="w-10 h-10 object-cover rounded-full"
           />
         ) : (
           <div className="flex h-11 items-center py-0 mx-2 cursor-pointer">
@@ -46,7 +46,7 @@ export default async function UserMenu() {
         className={cn(
           "hidden absolute top-0 -left-20 group-hover:block cursor-pointer",
           {
-            "-left-[200px] lg:-left-[138px]": user,
+            "-left-[200px] lg:-left-[148px]": user,
           }
         )}
       >
@@ -126,6 +126,10 @@ const links = [
   },
 ];
 const extraLinks = [
+  {
+    title: "Profile",
+    link: "/profile",
+  },
   {
     title: "Settings",
     link: "/",

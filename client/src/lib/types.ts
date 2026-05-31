@@ -1,7 +1,4 @@
-import {
-  getProductPageData
-} from "@/api/product";
-
+import { getProductPageData } from "@/api/product";
 import countries from "@/data/countries.json";
 
 export interface DashboardSidebarMenuInterface {
@@ -51,7 +48,7 @@ export type ProductWithVariantType = {
   weight?: number;
   colors: { color: string }[];
   sizes: { size: string; quantity: number; price: number; discount: number }[];
-   product_specs: { name: string; value: string }[];
+  product_specs: { name: string; value: string }[];
   variant_specs: { name: string; value: string }[];
   keywords: string[];
   questions: { question: string; answer: string }[];
@@ -133,7 +130,6 @@ export type OfferTag = {
   updatedAt: Date;
 };
 
-
 export type CountryWithShippingRatesType = {
   countryId: string;
   countryName: string;
@@ -149,7 +145,6 @@ export interface Country {
 }
 
 export type SelectMenuOption = (typeof countries)[number];
-
 
 export type VariantSimplified = {
   variantId: string;
@@ -225,6 +220,17 @@ export type ProductType = {
   sales: number;
   variants: VariantSimplified[];
   variantImages: VariantImageType[];
+};
+
+export type ProductWishlistType = {
+  id: string;
+  slug: string;
+  name: string;
+  rating: number;
+  sales: number;
+
+  variants: ProductWithVariantType[];
+  variantImages: string[];
 };
 
 export type Spec = {
@@ -360,7 +366,7 @@ export type Color = {
 };
 
 export type Coupon = {
-  id: string;         
+  id: string;
   code: string;
   startDate: string;
   endDate: string;
@@ -420,7 +426,7 @@ export type CartItem = {
   updatedAt: Date;
 };
 
-enum OrderStatus {
+export enum OrderStatus {
   Pending = "Pending",
   Confirmed = "Confirmed",
   Processing = "Processing",
@@ -432,10 +438,11 @@ enum OrderStatus {
   Refunded = "Refunded",
   Returned = "Returned",
   PartiallyShipped = "PartiallyShipped",
-  OnHold = "OnHold"
+  OnHold = "OnHold",
+  OutforDelivery = "OutforDelivery",
 }
 
-enum PaymentStatus {
+export enum PaymentStatus {
   Pending = "Pending",
   Paid = "Paid",
   Failed = "Failed",
@@ -443,20 +450,21 @@ enum PaymentStatus {
   Cancelled = "Cancelled",
   Refunded = "Refunded",
   PartiallyRefunded = "PartiallyRefunded",
-  Chargeback = "Chargeback"
+  Chargeback = "Chargeback",
+  Completed = "Completed",
 }
 
 enum PaymentMethod {
   Paypal = "Paypal",
-  Stripe = "Stripe"
+  Stripe = "Stripe",
 }
 
-type PaymentDetails = {
-  id: string; 
+export type PaymentDetails = {
+  id: string;
 
-  paymentIntentId: string;
+  paymentInetntId: string;
   paymentMethod: PaymentMethod; // enum
-  status: PaymentStatus;        // enum
+  status: PaymentStatus; // enum
   amount: number;
   currency: string;
 
@@ -470,25 +478,25 @@ type PaymentDetails = {
   updatedAt: Date;
 };
 
-enum ProductStatus {
-  Pending = "Pending",                   // Product added, no action yet
-  Processing = "Processing",             // Being prepared (picked, packed, manufactured)
+export enum ProductStatus {
+  Pending = "Pending", // Product added, no action yet
+  Processing = "Processing", // Being prepared (picked, packed, manufactured)
   ReadyForShipment = "ReadyForShipment", // Packed, ready for shipment
-  Shipped = "Shipped",                   // Shipped to customer
-  Delivered = "Delivered",               // Delivered
-  Canceled = "Canceled",                 // Order canceled
-  Returned = "Returned",                 // Returned by customer
-  Refunded = "Refunded",                 // Cost refunded
-  FailedDelivery = "FailedDelivery",     // Delivery attempt failed
-  OnHold = "OnHold",                     // On hold (stock/verification issues)
-  Backordered = "Backordered",           // Delayed due to stock unavailability
+  Shipped = "Shipped", // Shipped to customer
+  Delivered = "Delivered", // Delivered
+  Canceled = "Canceled", // Order canceled
+  Returned = "Returned", // Returned by customer
+  Refunded = "Refunded", // Cost refunded
+  FailedDelivery = "FailedDelivery", // Delivery attempt failed
+  OnHold = "OnHold", // On hold (stock/verification issues)
+  Backordered = "Backordered", // Delayed due to stock unavailability
   PartiallyShipped = "PartiallyShipped", // Some units shipped
   ExchangeRequested = "ExchangeRequested", // Customer requested exchange
-  AwaitingPickup = "AwaitingPickup"      // Awaiting customer pickup
+  AwaitingPickup = "AwaitingPickup", // Awaiting customer pickup
 }
 
- type OrderItem = {
-  id: string; 
+export type OrderItem = {
+  id: string;
 
   productId: string;
   variantId: string;
@@ -633,7 +641,9 @@ export type CartProductType = {
   isFreeShipping: boolean;
 };
 
-export type ProductPageDataType = Awaited<ReturnType<typeof getProductPageData>>;
+export type ProductPageDataType = Awaited<
+  ReturnType<typeof getProductPageData>
+>;
 
 export type RatingStatisticsType = {
   ratingStatistics: {
@@ -662,7 +672,7 @@ export type ReviewWithImageType = Review & {
 export type StatisticsCardType = {
   rating: number;
   numReviews: number;
-  percentage: number
+  percentage: number;
 }[];
 
 export type ProductShippingDetailsType = {
@@ -677,4 +687,86 @@ export type ProductShippingDetailsType = {
   countryName: string;
   city: string;
   isFreeShipping: boolean;
+};
+
+export type OrderFullType = {
+  id: string;
+  userId: string;
+  groups: OrderGroup[];
+  shippingAddress: ShippingAddress | null;
+  paymentDetails: PaymentDetails | null;
+};
+
+export type OrderGroupWithItemsType = OrderGroup & {
+  items: OrderItem[];
+  store: StoreData;
+  _count: {
+    items: number;
+  };
+  coupon: Coupon | null;
+};
+
+export type OrderTableFilter =
+  | ""
+  | "unpaid"
+  | "toShip"
+  | "shipped"
+  | "delivered";
+
+export type OrderTableDateFilter =
+  | ""
+  | "last-6-months"
+  | "last-1-year"
+  | "last-2-years";
+
+export type UserOrderType = {
+  id: string;
+  userId: string;
+
+  groups: OrderGroup[];
+
+  shippingAddress: ShippingAddress | null;
+
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type UserPaymentType = {
+  id: string;
+
+  paymentMethod: string;
+  paymentInetntId: string;
+
+  createdAt: string;
+  updatedAt: string;
+
+  order: OrderFullType;
+};
+
+export type PaymentTableFilter = "" | "paypal" | "credit-card";
+
+export type PaymentTableDateFilter =
+  | ""
+  | "last-6-months"
+  | "last-1-year"
+  | "last-2-years";
+
+export type ReviewFilter = "5" | "4" | "3" | "2" | "1" | "";
+
+export type ReviewDateFilter =
+  | ""
+  | "last-6-months"
+  | "last-1-year"
+  | "last-2-years";
+
+export type FiltersQueryType = {
+  search: string;
+  category: string;
+  subCategory: string;
+  offer: string;
+  size: string;
+  sort: string;
 };

@@ -46,9 +46,9 @@ export const ProductStatus = [
 
 const OrderSchema = new mongoose.Schema(
   {
-    shippingFees: { type: Number, required: true },
-    subTotal: { type: Number, required: true },
-    total: { type: Number, required: true },
+    shippingFees: { type: Number },
+    subTotal: { type: Number },
+    total: { type: Number },
 
     // References to OrderGroups (one-to-many)
     groups: [
@@ -79,7 +79,7 @@ const OrderSchema = new mongoose.Schema(
     },
 
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
       index: true,

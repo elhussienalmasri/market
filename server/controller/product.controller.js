@@ -1,22 +1,30 @@
 import { Store } from "../models/store.model.js";
 import slugify from "slugify";
 
-import { Product, Question, Spec, Review } from "../models/product.model.js"
+import { Product, Question, Spec, Review } from "../models/product.model.js";
 
 import { createProductVariant } from "../utils/createProductVariant.js";
 import { generateUniqueSlug } from "../utils/generateUniqueSlug.js";
 
-import {retrieveProductDetails, getShippingDetails, getStoreFollowersCount, checkIfUserFollowingStore, getRatingStatistics} from "../services/product.service.js";
-import {getUserCountry, formatProductResponse} from "../utils/product.utils.js";
+import {
+  retrieveProductDetails,
+  getShippingDetails,
+  getStoreFollowersCount,
+  checkIfUserFollowingStore,
+  getRatingStatistics,
+} from "../services/product.service.js";
+import {
+  getUserCountry,
+  formatProductResponse,
+} from "../utils/product.utils.js";
 import { User } from "../models/user.model.js";
-
 
 // upsertProduct (create or update product + variant)
 // Controller: Upsert product and variant
 export const upsertProduct = async (req, res) => {
   try {
     const { product } = req.body;
-    const { storeUrl } = req.params
+    const { storeUrl } = req.params;
     const { userId } = req.auth;
 
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
@@ -25,7 +33,8 @@ export const upsertProduct = async (req, res) => {
         .status(403)
         .json({ error: "Unauthorized Access: Seller Privileges Required." });
 
-    if (!product) return res.status(400).json({ error: "Missing product data." });
+    if (!product)
+      return res.status(400).json({ error: "Missing product data." });
 
     // Check if store exists
     const store = await Store.findOne({ url: storeUrl });
@@ -37,7 +46,7 @@ export const upsertProduct = async (req, res) => {
     // Generate unique slugs
     const productSlug = await generateUniqueSlug(
       slugify(product.name, { lower: true, trim: true }),
-      Product
+      Product,
     );
 
     if (!existingProduct) {
@@ -60,14 +69,14 @@ export const upsertProduct = async (req, res) => {
             name: spec.name,
             value: spec.value,
             productId: newProduct._id,
-          }))
+          })),
         ),
         Question.insertMany(
           product.questions.map((q) => ({
             question: q.question,
             answer: q.answer,
             productId: newProduct._id,
-          }))
+          })),
         ),
       ]);
 
@@ -78,10 +87,8 @@ export const upsertProduct = async (req, res) => {
 
       const result = await createProductVariant(product, newProduct);
       res.status(201).json(result);
-
     } else {
-
-      const result = await createProductVariant(product, existingProduct)
+      const result = await createProductVariant(product, existingProduct);
       res.status(201).json(result);
     }
   } catch (error) {
@@ -143,7 +150,7 @@ export const getProductMainInfo = async (req, res) => {
       categoryId: product.categoryId,
       subCategoryId: product.subCategoryId,
       storeId: product.store,
-      offerTag: product.offerTag
+      offerTag: product.offerTag,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -161,17 +168,17 @@ export const getAllStoreProducts = async (req, res) => {
     const products = await Product.find({ storeId: store._id })
       .populate("categoryId subCategoryId storeId")
       .populate({
-        path: 'variants',
+        path: "variants",
         populate: [
           {
-            path: 'images',
+            path: "images",
             options: { sort: { order: 1 } }, //  order by `order` ascending
           },
           {
-            path: 'colors',
+            path: "colors",
           },
           {
-            path: 'sizes',
+            path: "sizes",
           },
         ],
       });
@@ -189,7 +196,9 @@ export const deleteProduct = async (req, res) => {
 
     if (!user) throw new Error("Unauthenticated.");
     if (user.role !== "SELLER")
-      throw new Error("Unauthorized Access: Seller Privileges Required for Entry.");
+      throw new Error(
+        "Unauthorized Access: Seller Privileges Required for Entry.",
+      );
     if (!productId) throw new Error("Please provide product id.");
 
     await Product.findByIdAndDelete(productId);
@@ -202,12 +211,7 @@ export const deleteProduct = async (req, res) => {
 // Retrieves products based on filters (category, size, brand, etc.), returns matching variants with pagination and metadata like total pages and current page.
 export const getProducts = async (req, res) => {
   try {
-    const {
-      page = 1,
-      pageSize = 10,
-      sortBy = '',
-      ...filters
-    } = req.query;
+    const { page = 1, pageSize = 10, sortBy = "", ...filters } = req.query;
 
     const currentPage = parseInt(page);
     const limit = parseInt(pageSize);
@@ -216,13 +220,54 @@ export const getProducts = async (req, res) => {
     // Construct the base query
     const query = {};
 
-    //     if (filters.category) {
-    //   query.category = filters.category;
-    // }
+    if (filters.category) {
+      query.category = filters.category;
+    }
 
-    // if (filters.brand) {
-    //   query.brand = filters.brand;
-    // }
+    if (filters.brand) {
+      query.brand = filters.brand;
+    }
+
+    if (filters.search) {
+      const matchingVariants = await ProductVariant.find({
+        $or: [
+          {
+            variantName: {
+              $regex: filters.search,
+              $options: "i",
+            },
+          },
+          {
+            variantDescription: {
+              $regex: filters.search,
+              $options: "i",
+            },
+          },
+        ],
+      }).select("_id");
+
+      variantIds = matchingVariants.map((variant) => variant._id);
+
+      query.$or = [
+        {
+          name: {
+            $regex: filters.search,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: filters.search,
+            $options: "i",
+          },
+        },
+        {
+          variants: {
+            $in: variantIds,
+          },
+        },
+      ];
+    }
 
     // Get all filtered, sorted products
     const products = await Product.find(query)
@@ -230,12 +275,8 @@ export const getProducts = async (req, res) => {
       .limit(limit)
       // .sort(sortOptions)
       .populate({
-        path: 'variants',
-        populate: [
-          { path: 'sizes' },
-          { path: 'images' },
-          { path: 'colors' },
-        ],
+        path: "variants",
+        populate: [{ path: "sizes" }, { path: "images" }, { path: "colors" }],
       })
       .lean();
 
@@ -256,7 +297,7 @@ export const getProducts = async (req, res) => {
 
       const variantImages = filteredVariants.map((variant) => ({
         url: `/product/${product.slug}/${variant.slug}`,
-        image: variant.variantImage || (variant.images?.[0]?.url ?? ''),
+        image: variant.variantImage || (variant.images?.[0]?.url ?? ""),
       }));
 
       return {
@@ -279,7 +320,7 @@ export const getProducts = async (req, res) => {
       totalCount,
     });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -287,7 +328,7 @@ export const getProductPageData = async (req, res) => {
   try {
     const { productSlug, variantSlug } = req.params;
     const { userId } = req.auth;
-   
+
     const user = await User.findOne({ clerkId: req.auth.userId });
 
     // Product & variant
@@ -305,14 +346,14 @@ export const getProductPageData = async (req, res) => {
       product.shippingFeeMethod,
       userCountry,
       product.storeId,
-      product.freeShipping
+      product.freeShipping,
     );
 
     // Store data
     const storeFollowersCount = await getStoreFollowersCount(product.storeId);
     const isUserFollowingStore = await checkIfUserFollowingStore(
       product.storeId,
-      user._id
+      user._id,
     );
 
     // Rating stats
@@ -324,7 +365,7 @@ export const getProductPageData = async (req, res) => {
       productShippingDetails,
       storeFollowersCount,
       isUserFollowingStore,
-      ratingStatistics
+      ratingStatistics,
     );
 
     return res.json(response);
@@ -339,7 +380,7 @@ export const getProductFilteredReviews = async (
   filters = {},
   sort,
   page = 1,
-  pageSize = 4
+  pageSize = 4,
 ) => {
   const reviewFilter = {
     product: productId.params.storeUrl,
@@ -382,8 +423,9 @@ export const getProductBySlug = async (req, res) => {
   try {
     const { productSlug } = req.params;
 
-    const product = await Product.findOne({ slug: productSlug })
-      .populate("variants"); // remove if variants are embedded
+    const product = await Product.findOne({ slug: productSlug }).populate(
+      "variants",
+    ); // remove if variants are embedded
 
     if (!product) {
       return res.status(404).json({
@@ -396,7 +438,6 @@ export const getProductBySlug = async (req, res) => {
       success: true,
       data: product,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -461,8 +502,7 @@ export const getProductShippingFee = async (req, res) => {
 
     const feeCalculators = {
       ITEM: () =>
-        shippingFeePerItem +
-        shippingFeeForAdditionalItem * additionalItemsQty,
+        shippingFeePerItem + shippingFeeForAdditionalItem * additionalItemsQty,
 
       WEIGHT: () => shippingFeePerKg * Number(weight) * Number(quantity),
 
@@ -482,6 +522,81 @@ export const getProductShippingFee = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error",
+    });
+  }
+};
+
+export const getProductsByIds = async (req, res) => {
+  try {
+    const { ids, page = 1, pageSize = 10 } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Ids are required",
+      });
+    }
+
+    const currentPage = Number(page);
+    const limit = Number(pageSize);
+    const skip = (currentPage - 1) * limit;
+
+    const variants = await ProductVariant.find({
+      _id: { $in: ids },
+    })
+      .populate({
+        path: "product",
+        select: "name slug rating sales",
+      })
+      .select("variantName slug images sizes product")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const products = variants.map((variant) => ({
+      id: variant.product?._id,
+      slug: variant.product?.slug,
+      name: variant.product?.name,
+      rating: variant.product?.rating,
+      sales: variant.product?.sales,
+      variants: [
+        {
+          variantId: variant._id,
+          variantName: variant.variantName,
+          variantSlug: variant.slug,
+          images: variant.images,
+          sizes: variant.sizes,
+        },
+      ],
+      variantImages: [],
+    }));
+
+    // Preserve original order of ids
+    const orderedProducts = ids
+      .map((id) =>
+        products.find(
+          (product) => product.variants[0].variantId.toString() === id,
+        ),
+      )
+      .filter(Boolean);
+
+    const totalProducts = await ProductVariant.countDocuments({
+      _id: { $in: ids },
+    });
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    return res.status(200).json({
+      success: true,
+      products: orderedProducts,
+      totalPages,
+    });
+  } catch (error) {
+    console.error("Error retrieving products by ids:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch products. Please try again.",
     });
   }
 };

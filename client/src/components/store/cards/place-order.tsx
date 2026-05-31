@@ -1,5 +1,5 @@
 import { ShippingAddress } from "@/lib/types";
-import { Dispatch, FC, SetStateAction } from "react";
+import { Dispatch, FC, SetStateAction, useState } from "react";
 import { Button } from "../ui/button";
 import FastDelivery from "./fast-delivery";
 import { SecurityPrivacyCard } from "../product-page/returns-security-privacy-card";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { CartWithCartItemsType } from "@/lib/types";
 import ApplyCouponForm from "../forms/apply-coupon";
 import { useSession } from "@clerk/nextjs";
+import { PulseLoader } from "react-spinners";
 
 interface Props {
   shippingAddress: ShippingAddress | null;
@@ -23,11 +24,13 @@ const PlaceOrderCard: FC<Props> = ({
   setCartData,
   cartData,
 }) => {
+  const [loading, setLoading] = useState<boolean>(false);
   const { _id, coupon, subTotal, shippingFees, total } = cartData;
   const { push } = useRouter();
   const emptyCart = useCartStore((state) => state.emptyCart);
   const { session } = useSession();
   const handlePlaceOrder = async () => {
+    setLoading(true)
     if (!shippingAddress) {
       toast.error("Select a shipping address first !");
     } else {
@@ -42,13 +45,14 @@ const PlaceOrderCard: FC<Props> = ({
         alert("You are not logged in");
         return; // stop execution
       }
-      const order = await placeOrder({ shippingAddress, _id }, token);
+      const order = await placeOrder( shippingAddress, _id , token);
       if (order) {
         emptyCart();
         await emptyUserCart(token);
         push(`/order/${order.orderId}`);
       }
     }
+    setLoading(false);
   };
 
   let discountedAmount = 0;
@@ -126,7 +130,11 @@ const PlaceOrderCard: FC<Props> = ({
       </div>
       <div className="mt-2 p-4 bg-white">
         <Button onClick={() => handlePlaceOrder()}>
-          <span>Place order</span>
+          {loading ? (
+            <PulseLoader size={5} color="#fff" />
+          ) : (
+            <span>Place order</span>
+          )}
         </Button>
       </div>
       <div className="mt-2 p-4 bg-white px-6">

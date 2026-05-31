@@ -231,3 +231,26 @@ export const fetchShippingFee = async ({
     );
   }
 };
+
+export const getProductsByIds = async (
+  ids: string[],
+  page: number = 1,
+  pageSize: number = 10
+) => {
+  try {
+    const { data } = await axiosInstance.get("/products/by-ids", {
+      params: {
+        ids: ids.join(","),
+        page,
+        pageSize,
+      },
+    });
+
+    return data;
+  } catch (error: any) {
+    throw new Error(
+      error?.response?.data?.message ||
+      "Failed to fetch products"
+    );
+  }
+};

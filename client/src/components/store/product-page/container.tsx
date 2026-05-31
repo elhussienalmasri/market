@@ -6,7 +6,7 @@ import ProductInfo from "./product-info/product-info";
 import ShipTo from "./shipping/ship-to";
 import ShippingDetails from "./shipping/shipping-details";
 import ReturnPrivacySecurityCard from "./returns-security-privacy-card";
-import { cn, isProductValidToAdd } from "@/lib/utils";
+import { cn, isProductValidToAdd, updateProductHistory } from "@/lib/utils";
 import QuantitySelector from "./quantity-selector";
 import SocialShare from "../shared/social-share";
 import { ProductVariantImage } from "@/lib/types";
@@ -116,6 +116,9 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
     };
   }, []);
 
+  // Add product to history
+  updateProductHistory(variantId);
+
   const handleAddToCart = () => {
     if (maxQty <= 0) return;
     addToCart(productToBeAddedToCart);
@@ -195,7 +198,7 @@ const ProductPageContainer: FC<Props> = ({ productData, sizeId, children }) => {
                     <span>Buy now</span>
                   </button>
                   <button
-                    disabled={!isProductValid}
+                    // disabled={!isProductValid}
                     className={cn(
                       "relative w-full py-2.5 min-w-20 bg-orange-border hover:bg-[#e4cdce] text-orange-hover h-11 rounded-3xl leading-6 inline-block font-bold whitespace-nowrap border border-orange-border cursor-pointer transition-all duration-300 ease-bezier-1 select-none",
                       {

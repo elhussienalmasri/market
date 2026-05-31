@@ -97,9 +97,9 @@ export const upsertShippingAddress = async (
 // --------------------------------------------------
 // PLACE ORDER
 // --------------------------------------------------
-export const placeOrder = async (orderData: any, token: string) => {
+export const placeOrder = async (shippingAddress: any, cartId:string, token: string) => {
   try {
-    const response = await axiosInstance.post("/user/order/place", orderData, {
+    const response = await axiosInstance.post("/user/order/place", {shippingAddress,cartId}, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

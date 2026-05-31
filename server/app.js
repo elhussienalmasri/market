@@ -13,6 +13,8 @@ import productRoutes from "./routes/product.route.js";
 import offerTagRoutes from "./routes/offerTag.route.js";
 import userRoutes from "./routes/user.route.js";
 import couponRoutes from "./routes/coupon.routes.js";
+import orderRoutes from "./routes/order.route.js";
+import profileRoutes from "./routes/profile.route.js";
 
 dotenv.config(); // Load .env file
 
@@ -39,6 +41,8 @@ app.use("/api/subCategories", subCategoryRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/offer-tags", offerTagRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server started at http://localhost:${PORT}`);

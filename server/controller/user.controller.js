@@ -8,8 +8,9 @@ import { Order, OrderGroup, OrderItem } from "../models/order.model.js";
 import { getShippingDetails } from "../services/product.service.js";
 import { calculateShippingFee } from "../utils/product.utils.js";
 import { Country } from "../models/country.model.js";
-import Wishlist  from "../models/wishlist.model.js";
-import {updateCartWithLatest} from "../services/cart.service.js";
+import Wishlist from "../models/wishlist.model.js";
+import { updateCartWithLatest } from "../services/cart.service.js";
+import { getDeliveryDetailsForStoreByCountry } from "../services/product.service.js";
 
 export const followStoreController = async (req, res) => {
   try {
@@ -51,11 +52,15 @@ export const followStore = async (req, res) => {
     if (!store) return res.status(404).json({ error: "Store not found." });
 
     // Check if the user is already following the store
-    const userFollowingStore = store.followers.some(follower => follower.toString() === user._id.toString());
+    const userFollowingStore = store.followers.some(
+      (follower) => follower.toString() === user._id.toString(),
+    );
 
     if (userFollowingStore) {
       // Unfollow the store
-      store.followers = store.followers.filter(follower => follower.toString() !== user._id.toString());
+      store.followers = store.followers.filter(
+        (follower) => follower.toString() !== user._id.toString(),
+      );
       await store.save();
       return res.status(200).json({ following: false });
     } else {
@@ -69,7 +74,6 @@ export const followStore = async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
-
 
 export const saveUserCart = async (req, res) => {
   try {
@@ -93,7 +97,7 @@ export const saveUserCart = async (req, res) => {
             match: { _id: variantId },
             populate: { path: "sizes", match: { _id: sizeId } },
           })
-          .populate("store")
+          .populate("storeId")
           .populate({
             path: "freeShipping.eligibaleCountries",
           });
@@ -104,7 +108,7 @@ export const saveUserCart = async (req, res) => {
           !product.variants[0].sizes.length
         ) {
           throw new Error(
-            `Invalid product, variant, or size combination for productId ${productId}, variantId ${variantId}, sizeId ${sizeId}`
+            `Invalid product, variant, or size combination for productId ${productId}, variantId ${variantId}, sizeId ${sizeId}`,
           );
         }
 
@@ -118,7 +122,11 @@ export const saveUserCart = async (req, res) => {
           : size.price;
 
         // Shipping calculation (assuming country is in req.cookies.userCountry)
-        let shippingDetails = { shippingFee: 0, extraShippingFee: 0, isFreeShipping: false };
+        let shippingDetails = {
+          shippingFee: 0,
+          extraShippingFee: 0,
+          isFreeShipping: false,
+        };
         const countryCookie = req.cookies.userCountry;
         if (countryCookie) {
           const country = JSON.parse(countryCookie);
@@ -126,7 +134,7 @@ export const saveUserCart = async (req, res) => {
             product.shippingFeeMethod,
             country,
             product.store,
-            product.freeShipping
+            product.freeShipping,
           );
           if (typeof tempDetails !== "boolean") shippingDetails = tempDetails;
         }
@@ -138,10 +146,11 @@ export const saveUserCart = async (req, res) => {
               quantity === 1
                 ? shippingDetails.shippingFee
                 : shippingDetails.shippingFee +
-                shippingDetails.extraShippingFee * (quantity - 1);
+                  shippingDetails.extraShippingFee * (quantity - 1);
             break;
           case "WEIGHT":
-            shippingFee = shippingDetails.shippingFee * variant.weight * quantity;
+            shippingFee =
+              shippingDetails.shippingFee * variant.weight * quantity;
             break;
           case "FIXED":
             shippingFee = shippingDetails.shippingFee;
@@ -156,7 +165,7 @@ export const saveUserCart = async (req, res) => {
           productSlug: product.slug,
           variantSlug: variant.slug,
           sizeId,
-          storeId: product.store._id,
+          storeId: product.storeId,
           sku: variant.sku,
           name: `${product.name} · ${variant.variantName}`,
           image: variant.images[0]?.url || "",
@@ -166,17 +175,17 @@ export const saveUserCart = async (req, res) => {
           shippingFee,
           totalPrice,
         };
-      })
+      }),
     );
 
     const subTotal = validatedCartItems.reduce(
       (acc, item) => acc + item.price * item.quantity,
-      0
+      0,
     );
 
     const shippingFees = validatedCartItems.reduce(
       (acc, item) => acc + item.shippingFee,
-      0
+      0,
     );
 
     const total = subTotal + shippingFees;
@@ -195,7 +204,7 @@ export const saveUserCart = async (req, res) => {
       validatedCartItems.map((item) => ({
         ...item,
         cartId: cart._id,
-      }))
+      })),
     );
 
     // Save only ObjectIds in cartItems
@@ -215,11 +224,11 @@ export const getUserShippingAddresses = async (req, res) => {
     const { userId } = req.auth;
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
 
-    const shippingAddresses = await ShippingAddress.find({ userId: user._id })
-      .populate("countryId");
- 
-    return res.json(shippingAddresses);
+    const shippingAddresses = await ShippingAddress.find({ userId: userId })
+      .populate("countryId")
+      .populate("userId");
 
+    return res.json(shippingAddresses);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Server error" });
@@ -232,7 +241,8 @@ export const upsertShippingAddress = async (req, res) => {
     const address = req.body;
 
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
-    if (!address) return res.status(400).json({ error: "Please provide address data." });
+    if (!address)
+      return res.status(400).json({ error: "Please provide address data." });
 
     const { id, default: isDefault } = address;
 
@@ -240,19 +250,29 @@ export const upsertShippingAddress = async (req, res) => {
     if (isDefault) {
       await ShippingAddress.updateMany(
         { userId: user._id, default: true },
-        { default: false }
+        { default: false },
       );
     }
 
-    // Upsert logic
-    const upsertedAddress = await ShippingAddress.findOneAndUpdate(
-      { _id: id },                     // match existing
-      { ...address, userId: userId }, // new values
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    let savedAddress;
 
-    return res.json(upsertedAddress);
+    // UPDATE existing address
+    if (id) {
+      savedAddress = await ShippingAddress.findOneAndUpdate(
+        { _id: id, userId },
+        { ...address, userId },
+        { new: true },
+      );
+    }
+    // CREATE new address
+    else {
+      savedAddress = await ShippingAddress.create({
+        ...address,
+        userId,
+      });
+    }
 
+    return res.json(savedAddress);
   } catch (error) {
     console.error("Error upserting shipping address:", error);
     return res.status(500).json({ error: "Server error" });
@@ -271,6 +291,7 @@ export const placeOrder = async (req, res) => {
     if (!cart) return res.status(404).json({ error: "Cart not found." });
 
     const cartItems = cart.cartItems;
+    const cartCoupon = cart.couponId; // The coupon, if it exists
 
     // Fetch and validate each cart item
     const validatedCartItems = await Promise.all(
@@ -278,13 +299,19 @@ export const placeOrder = async (req, res) => {
         const { productId, variantId, sizeId, quantity } = cartItem;
 
         const product = await Product.findOne({ _id: productId }).populate({
-          path: 'variants',
+          path: "variants",
           match: { _id: variantId },
-          populate: { path: 'sizes', match: { _id: sizeId } }
+          populate: { path: "sizes", match: { _id: sizeId } },
         });
 
-        if (!product || !product.variants.length || !product.variants[0].sizes.length) {
-          throw new Error(`Invalid product, variant, or size for productId ${productId}, variantId ${variantId}, sizeId ${sizeId}`);
+        if (
+          !product ||
+          !product.variants.length ||
+          !product.variants[0].sizes.length
+        ) {
+          throw new Error(
+            `Invalid product, variant, or size for productId ${productId}, variantId ${variantId}, sizeId ${sizeId}`,
+          );
         }
 
         const variant = product.variants[0];
@@ -298,11 +325,23 @@ export const placeOrder = async (req, res) => {
           : size.price;
 
         // Fetch country and calculate shipping
-        const country = await ShippingAddress.findById(shippingAddress.id).populate("country");
+        const country = await ShippingAddress.findById(
+          shippingAddress.id,
+        ).populate("countryId");
         if (!country) throw new Error("Failed to get shipping details.");
 
-        const shippingDetails = await getShippingDetails(product.shippingFeeMethod, country, product.storeId, product.freeShipping);
-        const shippingFee = calculateShippingFee(product.shippingFeeMethod, shippingDetails, quantity, variant.weight);
+        const shippingDetails = await getShippingDetails(
+          product.shippingFeeMethod,
+          country,
+          product.storeId,
+          product.freeShipping,
+        );
+        const shippingFee = calculateShippingFee(
+          product.shippingFeeMethod,
+          shippingDetails,
+          quantity,
+          variant.weight,
+        );
 
         const totalPrice = price * validQuantity + shippingFee;
 
@@ -322,7 +361,7 @@ export const placeOrder = async (req, res) => {
           shippingFee,
           totalPrice,
         };
-      })
+      }),
     );
 
     // Group items by store
@@ -335,7 +374,7 @@ export const placeOrder = async (req, res) => {
     // Create the order
     const order = await Order.create({
       userId,
-      shippingAddressId: shippingAddress.id,
+      shippingAddressId: shippingAddress._id,
       orderStatus: "Pending",
       paymentStatus: "Pending",
     });
@@ -345,21 +384,43 @@ export const placeOrder = async (req, res) => {
 
     // Iterate over grouped items and create OrderGroups & OrderItems
     for (const [storeId, items] of Object.entries(groupedItems)) {
-      const groupedTotalPrice = items.reduce((acc, item) => acc + item.totalPrice, 0);
-      const groupShippingFees = items.reduce((acc, item) => acc + item.shippingFee, 0);
+      const groupedTotalPrice = items.reduce(
+        (acc, item) => acc + item.totalPrice,
+        0,
+      );
+      const groupShippingFees = items.reduce(
+        (acc, item) => acc + item.shippingFee,
+        0,
+      );
 
-      const { shippingService, deliveryTimeMin, deliveryTimeMax } = await getDeliveryDetailsForStoreByCountry(storeId, shippingAddress.countryId);
+      const { shippingService, deliveryTimeMin, deliveryTimeMax } =
+        await getDeliveryDetailsForStoreByCountry(
+          storeId,
+          shippingAddress.countryId,
+        );
+
+      // Check coupon store
+      const check = storeId === cartCoupon?.storeId;
+
+      // Calculate discount based on coupon
+      let discountedAmount = 0;
+      if (check && cartCoupon) {
+        discountedAmount = (groupedTotalPrice * cartCoupon.discount) / 100;
+      }
+      // Calculate the total after applying the discount
+      const totalAfterDiscount = groupedTotalPrice - discountedAmount;
 
       const orderGroup = await OrderGroup.create({
         orderId: order._id,
         storeId,
         status: "Pending",
-        subTotal: groupedTotalPrice - groupShippingFees,
+        subTotal: groupedTotalPrice - groupShippingFees || 4,
         shippingFees: groupShippingFees,
-        total: groupedTotalPrice,
+        total: totalAfterDiscount,
         shippingService: shippingService || "International Delivery",
         shippingDeliveryMin: deliveryTimeMin || 7,
         shippingDeliveryMax: deliveryTimeMax || 30,
+        couponId: check && cartCoupon ? cartCoupon?._id : null,
       });
 
       // Create OrderItems
@@ -383,10 +444,9 @@ export const placeOrder = async (req, res) => {
       }
 
       // Update order totals
-      orderTotalPrice += groupedTotalPrice;
+      orderTotalPrice += totalAfterDiscount;
       orderShippingFee += groupShippingFees;
     }
-
     // Update the main order with final totals
     await Order.findByIdAndUpdate(order._id, {
       subTotal: orderTotalPrice - orderShippingFee,
@@ -398,29 +458,26 @@ export const placeOrder = async (req, res) => {
     // await Cart.findByIdAndDelete(cartId);
 
     return res.json({ orderId: order._id });
-
   } catch (error) {
     console.error("Error placing order:", error);
     return res.status(500).json({ error: "Server error" });
   }
 };
 
-
 export const emptyUserCart = async (req, res) => {
   try {
     // Ensure the user is authenticated
-    const { userId } = req.auth;  
+    const { userId } = req.auth;
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
 
     // Delete the user's cart
-    const result = await Cart.deleteOne({ userId }); 
+    const result = await Cart.deleteOne({ userId });
 
     if (result.deletedCount > 0) {
       return res.status(200).json({ message: "Cart emptied successfully." });
     } else {
       return res.status(404).json({ error: "Cart not found." });
     }
-
   } catch (error) {
     console.error("Error emptying user cart:", error);
     return res.status(500).json({ error: "Server error" });
@@ -432,26 +489,31 @@ export const getUserCart = async (req, res) => {
     const { userId } = req.auth;
 
     const cart = await Cart.findOne({ userId })
-      .populate('cartItems')
+      .populate("cartItems")
+      .populate({
+        path: "couponId",
+        populate: {
+          path: "storeId",
+        },
+      })
       .exec();
 
     if (!cart) {
       return res.status(404).json({
         success: false,
-        message: "Cart not found"
+        message: "Cart not found",
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: cart
+      data: cart,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -482,10 +544,7 @@ export const updateCart = async (req, res) => {
 
     const userCountry = req.userCountry; // from middleware or cookie parser
 
-    const updatedCart = await updateCartWithLatest(
-      cartProducts,
-      userCountry
-    );
+    const updatedCart = await updateCartWithLatest(cartProducts, userCountry);
 
     return res.json({
       success: true,
@@ -510,7 +569,7 @@ export const updateCart = async (req, res) => {
  */
 export const addToWishlist = async (req, res) => {
   try {
-    const { userId } = req.auth; /
+    const { userId } = req.auth;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -564,7 +623,6 @@ export const addToWishlist = async (req, res) => {
  * Updates checkout products with latest DB values (price, stock, shipping, totals).
  */
 export const updateCheckoutProductstWithLatest = async (req, res) => {
-
   try {
     const { cartProducts, country } = req.body;
     // VALIDATION
@@ -583,9 +641,7 @@ export const updateCheckoutProductstWithLatest = async (req, res) => {
     }
 
     // GET UNIQUE PRODUCT IDS
-    const productIds = [
-      ...new Set(cartProducts.map((item) => item.productId)),
-    ];
+    const productIds = [...new Set(cartProducts.map((item) => item.productId))];
 
     // FETCH PRODUCTS ONCE
     const products = await Product.find({
@@ -601,7 +657,7 @@ export const updateCheckoutProductstWithLatest = async (req, res) => {
 
     // CREATE PRODUCT MAP
     const productMap = new Map(
-      products.map((product) => [product._id.toString(), product])
+      products.map((product) => [product._id.toString(), product]),
     );
 
     // VALIDATE CART ITEMS
@@ -621,13 +677,13 @@ export const updateCheckoutProductstWithLatest = async (req, res) => {
         }
 
         const variant = product.variants.find(
-          (v) => v._id.toString() === variantId
+          (v) => v._id.toString() === variantId,
         );
 
         const variantDoc = await ProductVariant.findById(variantId);
 
         const size = variantDoc?.sizes?.find(
-          (s) => String(s) === String(sizeId)
+          (s) => String(s) === String(sizeId),
         );
 
         if (!variant || !size) {
@@ -642,15 +698,24 @@ export const updateCheckoutProductstWithLatest = async (req, res) => {
           ? size.price - (size.price * size.discount) / 100
           : size.price;
 
-
-        const shippingDetails = await getShippingDetails(product.shippingFeeMethod, country, product.storeId, product.freeShipping);
+        const shippingDetails = await getShippingDetails(
+          product.shippingFeeMethod,
+          country,
+          product.storeId,
+          product.freeShipping,
+        );
 
         // SHIPPING
-        const shippingFee = await calculateShippingFee(product.shippingFeeMethod, shippingDetails, quantity, variant.weight);
+        const shippingFee = await calculateShippingFee(
+          product.shippingFeeMethod,
+          shippingDetails,
+          quantity,
+          variant.weight,
+        );
 
         // TOTAL
         const totalPrice = Number(
-          (price * validatedQty + shippingFee).toFixed(2)
+          (price * validatedQty + shippingFee).toFixed(2),
         );
 
         return {
@@ -663,18 +728,18 @@ export const updateCheckoutProductstWithLatest = async (req, res) => {
           totalPrice,
           storeId: product.store?._id || null,
         };
-      })
+      }),
     );
 
     // TOTALS
     const subTotal = validatedCartItems.reduce(
       (acc, item) => acc + item.price * item.quantity,
-      0
+      0,
     );
 
     const shippingFees = validatedCartItems.reduce(
       (acc, item) => acc + item.shippingFee,
-      0
+      0,
     );
 
     const total = Number((subTotal + shippingFees).toFixed(2));
