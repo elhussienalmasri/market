@@ -1,13 +1,18 @@
 "use client";
 import { Search as SearchIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChangeEvent, useState } from "react";
 
 export default function Search() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const params = new URLSearchParams(searchParams);
   const { push, replace } = useRouter();
-  const searchQuery = params.get("search") || "";
+  const search_query_url = params.get("search");
+
+  const [searchQuery, setSearchQuery] = useState<string>(
+    search_query_url || "",
+  );
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -24,6 +29,13 @@ export default function Search() {
     }
   };
 
+  const handleInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (pathname === "/browse") return;
+  };
+
   return (
     <div className="relative lg:w-full flex-1">
       <form
@@ -35,6 +47,7 @@ export default function Search() {
           placeholder="Search..."
           className="bg-white text-black flex-1 border-none pl-2.5 m-2.5 outline-none"
           value={searchQuery}
+          onChange={handleInputChange}
         />
         <button
           type="submit"

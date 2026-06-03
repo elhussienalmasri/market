@@ -101,6 +101,7 @@ export async function getUserCountry(): Promise<Country> {
 export const getShippingDatesRange = (
   minDays: number,
   maxDays: number,
+  date?: string
 ): { minDate: string; maxDate: string; date?: Date } => {
   const currentDate = date ? new Date(date) : new Date();
 

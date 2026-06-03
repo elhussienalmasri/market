@@ -1,7 +1,13 @@
 import { Store } from "../models/store.model.js";
 import slugify from "slugify";
 
-import { Product, Question, Spec, Review } from "../models/product.model.js";
+import {
+  Product,
+  ProductVariant,
+  Question,
+  Spec,
+  Review,
+} from "../models/product.model.js";
 
 import { createProductVariant } from "../utils/createProductVariant.js";
 import { generateUniqueSlug } from "../utils/generateUniqueSlug.js";
@@ -18,6 +24,7 @@ import {
   formatProductResponse,
 } from "../utils/product.utils.js";
 import { User } from "../models/user.model.js";
+import { Category } from "../models/category.model.js";
 
 // upsertProduct (create or update product + variant)
 // Controller: Upsert product and variant
@@ -138,7 +145,9 @@ export const getProductVariant = async (req, res) => {
 export const getProductMainInfo = async (req, res) => {
   try {
     const { productId } = req.params;
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId)
+      .populate("questions")
+      .populate("specs");
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
@@ -166,7 +175,7 @@ export const getAllStoreProducts = async (req, res) => {
     if (!store) throw new Error("Please provide a valid store URL.");
 
     const products = await Product.find({ storeId: store._id })
-      .populate("categoryId subCategoryId storeId")
+      .populate("categoryId subCategoryId storeId offerTag")
       .populate({
         path: "variants",
         populate: [
@@ -217,17 +226,75 @@ export const getProducts = async (req, res) => {
     const limit = parseInt(pageSize);
     const skip = (currentPage - 1) * limit;
 
-    // Construct the base query
-    const query = {};
+    const andConditions = [];
 
+    // Category filter
     if (filters.category) {
-      query.category = filters.category;
+      const category = await Category.findOne({
+        $or: [{ url: filters.category }, { name: filters.category }],
+      }).select("_id");
+
+      if (category) {
+        andConditions.push({
+          categoryId: category._id,
+        });
+      }
     }
 
+    // Brand filter
     if (filters.brand) {
-      query.brand = filters.brand;
+      andConditions.push({
+        brand: filters.brand,
+      });
     }
 
+    // Offer filter
+    if (filters.offer) {
+      const offer = await OfferTag.findOne({
+        url: filters.offer,
+      }).select("_id");
+
+      if (offer) {
+        andConditions.push({
+          offerTagId: offer._id,
+        });
+      } else {
+        // No matching offer => return empty result
+        return res.json({
+          products: [],
+          totalPages: 0,
+          currentPage,
+          pageSize: limit,
+          totalCount: 0,
+        });
+      }
+    }
+
+    // Size filter
+    if (filters.size) {
+      const sizes = Array.isArray(filters.size) ? filters.size : [filters.size];
+
+      const variantsWithSizes = await ProductVariant.find()
+        .populate({
+          path: "sizes",
+          match: {
+            size: { $in: sizes },
+          },
+        })
+        .select("_id");
+
+      const matchingVariantIds = variantsWithSizes
+        .filter((variant) => variant.sizes?.length > 0)
+        .map((variant) => variant._id);
+
+      andConditions.push({
+        variants: {
+          $in: matchingVariantIds,
+        },
+      });
+    }
+
+    // Search filter
     if (filters.search) {
       const matchingVariants = await ProductVariant.find({
         $or: [
@@ -246,44 +313,106 @@ export const getProducts = async (req, res) => {
         ],
       }).select("_id");
 
-      variantIds = matchingVariants.map((variant) => variant._id);
+      const variantIds = matchingVariants.map((variant) => variant._id);
 
-      query.$or = [
-        {
-          name: {
-            $regex: filters.search,
-            $options: "i",
+      andConditions.push({
+        $or: [
+          {
+            name: {
+              $regex: filters.search,
+              $options: "i",
+            },
           },
-        },
-        {
-          description: {
-            $regex: filters.search,
-            $options: "i",
+          {
+            description: {
+              $regex: filters.search,
+              $options: "i",
+            },
           },
-        },
-        {
-          variants: {
-            $in: variantIds,
+          {
+            variants: {
+              $in: variantIds,
+            },
           },
-        },
-      ];
+        ],
+      });
     }
 
-    // Get all filtered, sorted products
+    // Build final query
+    const query =
+      andConditions.length > 0
+        ? {
+            $and: andConditions,
+          }
+        : {};
+
+    // Sorting
+    let sortOptions = {};
+
+    switch (sortBy) {
+      case "new-arrivals":
+        sortOptions = { createdAt: -1 };
+        break;
+
+      case "oldest":
+        sortOptions = { createdAt: 1 };
+        break;
+
+      case "name-asc":
+        sortOptions = { name: 1 };
+        break;
+
+      case "name-desc":
+        sortOptions = { name: -1 };
+        break;
+
+      case "top-rated":
+        sortOptions = { rating: -1 };
+        break;
+
+      case "sales":
+        sortOptions = { sales: -1 };
+        break;
+
+      default:
+        sortOptions = { createdAt: -1 };
+    }
+
+    // Fetch products
     const products = await Product.find(query)
       .skip(skip)
       .limit(limit)
-      // .sort(sortOptions)
+      .sort(sortOptions)
       .populate({
         path: "variants",
         populate: [{ path: "sizes" }, { path: "images" }, { path: "colors" }],
       })
       .lean();
 
+    const getMinPrice = (product) => {
+      const prices = product.variants.flatMap((variant) =>
+        variant.sizes.map((size) => {
+          const discount = size.discount || 0;
+          return size.price * (1 - discount / 100);
+        }),
+      );
+
+      return prices.length ? Math.min(...prices) : Infinity;
+    };
+
+    // Apply price sorting
+    if (sortBy === "price-low-to-high") {
+      products.sort((a, b) => getMinPrice(a) - getMinPrice(b));
+    }
+
+    if (sortBy === "price-high-to-low") {
+      products.sort((a, b) => getMinPrice(b) - getMinPrice(a));
+    }
+
     const totalCount = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Transform the products with filtered variants into ProductCardType structure
+    // Transform response
     const productsWithFilteredVariants = products.map((product) => {
       const filteredVariants = product.variants || [];
 
@@ -297,7 +426,7 @@ export const getProducts = async (req, res) => {
 
       const variantImages = filteredVariants.map((variant) => ({
         url: `/product/${product.slug}/${variant.slug}`,
-        image: variant.variantImage || (variant.images?.[0]?.url ?? ""),
+        image: variant.variantImage || variant.images?.[0]?.url || "",
       }));
 
       return {
@@ -311,8 +440,7 @@ export const getProducts = async (req, res) => {
       };
     });
 
-    // Return the paginated data along with metadata
-    res.json({
+    res.status(200).json({
       products: productsWithFilteredVariants,
       totalPages,
       currentPage,
@@ -320,7 +448,11 @@ export const getProducts = async (req, res) => {
       totalCount,
     });
   } catch (error) {
-    res.status(500).json({ error: "Server error" });
+    console.error(error);
+
+    res.status(500).json({
+      error: error.message || "Server error",
+    });
   }
 };
 

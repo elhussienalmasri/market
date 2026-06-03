@@ -5,7 +5,9 @@ import mongoose from "mongoose";
 // Get all categories (Public)
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ updatedAt: -1 });
+    const categories = await Category.find()
+      .populate("subCategories")
+      .sort({ updatedAt: -1 });
     res.status(200).json(categories);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -71,7 +73,6 @@ export const deleteCategory = async (req, res) => {
 };
 
 export const getAllSubCategoriesForCategory = async (req, res, next) => {
-
   try {
     const { categoryId } = req.params;
 

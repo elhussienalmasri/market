@@ -9,6 +9,7 @@ const OfferTagSchema = new mongoose.Schema(
     url: {
       type: String,
       required: true,
+      unique: true,
     },
   },
   {

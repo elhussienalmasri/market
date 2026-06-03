@@ -1,10 +1,12 @@
-import { Store }from "../models/store.model.js";
+import { Store } from "../models/store.model.js";
 //import User from "../models/User.js"; // if you use User model for reference
-import { Country, ShippingRate  } from "../models/country.model.js";
+import { Country, ShippingRate } from "../models/country.model.js";
+import { OrderGroup } from "../models/order.model.js";
+import { User } from "../models/user.model.js";
 
 // upsertStore controller
 export const upsertStore = async (req, res) => {
-  const { userId } = req.auth; 
+  const { userId } = req.auth;
   try {
     const user = req.user; // assume middleware adds authenticated user
 
@@ -59,7 +61,7 @@ export const upsertStore = async (req, res) => {
     } else {
       updatedStore = await Store.create({
         ...store,
-        userId: userId ,
+        userId: userId,
       });
     }
 
@@ -88,7 +90,7 @@ export const getStoresByUser = async (req, res) => {
     if (!stores.length) {
       return res.status(404).json({ message: "No stores found for this user" });
     }
-    
+
     res.status(200).json(stores);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -119,7 +121,7 @@ export const getStoreDefaultShippingDetails = async (req, res) => {
 
   try {
     if (!storeUrl) {
-      return res.status(400).json({ error: 'Store URL is required.' });
+      return res.status(400).json({ error: "Store URL is required." });
     }
 
     const store = await Store.findOne({ url: storeUrl }).select({
@@ -134,13 +136,13 @@ export const getStoreDefaultShippingDetails = async (req, res) => {
     });
 
     if (!store) {
-      return res.status(404).json({ error: 'Store not found.' });
+      return res.status(404).json({ error: "Store not found." });
     }
 
     res.json(store);
   } catch (error) {
-    console.error('Error fetching store shipping details:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error fetching store shipping details:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -150,25 +152,27 @@ export const updateStoreDefaultShippingDetails = async (req, res) => {
   const details = req.body;
   const userId = req.auth;
 
-  const user = req.user; 
+  const user = req.user;
 
   try {
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthenticated.' });
+      return res.status(401).json({ error: "Unauthenticated." });
     }
 
-    if (user.privateMetadata?.role !== 'SELLER') {
+    if (user.privateMetadata?.role !== "SELLER") {
       return res.status(403).json({
-        error: 'Unauthorized Access: Seller Privileges Required for Entry.',
+        error: "Unauthorized Access: Seller Privileges Required for Entry.",
       });
     }
 
     if (!storeUrl) {
-      return res.status(400).json({ error: 'Store URL is required.' });
+      return res.status(400).json({ error: "Store URL is required." });
     }
 
     if (!details || Object.keys(details).length === 0) {
-      return res.status(400).json({ error: 'No shipping details provided to update.' });
+      return res
+        .status(400)
+        .json({ error: "No shipping details provided to update." });
     }
 
     //Check ownership
@@ -176,7 +180,7 @@ export const updateStoreDefaultShippingDetails = async (req, res) => {
 
     if (!store) {
       return res.status(403).json({
-        error: 'Make sure you have the permissions to update this store.',
+        error: "Make sure you have the permissions to update this store.",
       });
     }
 
@@ -184,8 +188,7 @@ export const updateStoreDefaultShippingDetails = async (req, res) => {
     const updatedStore = await Store.findOneAndUpdate(
       { url: storeUrl },
       { $set: details },
-      { new: true }
-      
+      { new: true },
     ).select({
       // check them below
       defaultShippingService: 1,
@@ -200,8 +203,8 @@ export const updateStoreDefaultShippingDetails = async (req, res) => {
 
     return res.json(updatedStore);
   } catch (error) {
-    console.error('Error updating shipping details:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error updating shipping details:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 // Retrieves all countries and their shipping rates for a specific store; includes countries without rates (with null shippingRate), and returns a list sorted by country name.
@@ -210,15 +213,14 @@ export const getStoreShippingRates = async (req, res) => {
   const user = req.user;
 
   try {
-
-    if (user.privateMetadata?.role !== 'SELLER') {
+    if (user.privateMetadata?.role !== "SELLER") {
       return res.status(403).json({
-        error: 'Unauthorized Access: Seller Privileges Required for Entry.',
+        error: "Unauthorized Access: Seller Privileges Required for Entry.",
       });
     }
 
     if (!storeUrl) {
-      return res.status(400).json({ error: 'Store URL is required.' });
+      return res.status(400).json({ error: "Store URL is required." });
     }
 
     // Ownership check
@@ -227,7 +229,7 @@ export const getStoreShippingRates = async (req, res) => {
 
     if (!store) {
       return res.status(403).json({
-        error: 'Make sure you have the permissions to update this store.',
+        error: "Make sure you have the permissions to update this store.",
       });
     }
 
@@ -235,7 +237,9 @@ export const getStoreShippingRates = async (req, res) => {
     const countries = await Country.find().sort({ name: 1 }).lean();
 
     // Fetch shipping rates for the store
-    const shippingRates = await ShippingRate.find({ storeId: store._id }).lean();
+    const shippingRates = await ShippingRate.find({
+      storeId: store._id,
+    }).lean();
 
     // Map shipping rates by countryId
     const rateMap = new Map();
@@ -252,8 +256,8 @@ export const getStoreShippingRates = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    console.error('Error retrieving store shipping rates:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error retrieving store shipping rates:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 // Receives a store URL and shipping rate details, and upserts the rate for a specific country—updating if it exists or creating a new one if not; returns the updated or newly created rate
@@ -265,25 +269,29 @@ export const upsertShippingRate = async (req, res) => {
   try {
     // Auth
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthenticated.' });
+      return res.status(401).json({ error: "Unauthenticated." });
     }
 
-    if (user.privateMetadata?.role !== 'SELLER') {
+    if (user.privateMetadata?.role !== "SELLER") {
       return res.status(403).json({
-        error: 'Unauthorized Access: Seller Privileges Required for Entry.',
+        error: "Unauthorized Access: Seller Privileges Required for Entry.",
       });
     }
 
     if (!storeUrl) {
-      return res.status(400).json({ error: 'Store URL is required.' });
+      return res.status(400).json({ error: "Store URL is required." });
     }
 
-    if (!shippingRate || typeof shippingRate !== 'object') {
-      return res.status(400).json({ error: 'Please provide shipping rate data.' });
+    if (!shippingRate || typeof shippingRate !== "object") {
+      return res
+        .status(400)
+        .json({ error: "Please provide shipping rate data." });
     }
 
     if (!shippingRate.countryId) {
-      return res.status(400).json({ error: 'Please provide a valid country ID.' });
+      return res
+        .status(400)
+        .json({ error: "Please provide a valid country ID." });
     }
 
     // Check ownership and get store
@@ -292,7 +300,7 @@ export const upsertShippingRate = async (req, res) => {
 
     if (!store) {
       return res.status(403).json({
-        error: 'Make sure you have the permissions to update this store.',
+        error: "Make sure you have the permissions to update this store.",
       });
     }
 
@@ -300,7 +308,7 @@ export const upsertShippingRate = async (req, res) => {
       ? { _id: shippingRate.id, storeId: store._id }
       : { storeId: store._id, countryId: shippingRate.countryId };
 
-      const update = {
+    const update = {
       storeId: store._id,
       countryId: shippingRate.countryId,
       shippingService: shippingRate.shippingService,
@@ -313,18 +321,72 @@ export const upsertShippingRate = async (req, res) => {
       returnPolicy: shippingRate.returnPolicy,
     };
 
-    const upserted = await ShippingRate.findOneAndUpdate(
-      filter,
-      update,
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-      }
-    );
+    const upserted = await ShippingRate.findOneAndUpdate(filter, update, {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    });
 
     res.json(upserted);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/**
+ * GET /orders/:storeUrl
+ */
+export const getStoreOrders = async (req, res) => {
+  try {
+    const { userId } = req.auth;
+
+    const { storeUrl } = req.params;
+
+    // Auth check
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthenticated." });
+    }
+
+    // Role check
+    if (user.role !== "SELLER") {
+      return res.status(403).json({
+        message: "Unauthorized Access: Seller Privileges Required for Entry.",
+      });
+    }
+
+    // Find store
+    const store = await Store.findOne({ url: storeUrl });
+
+    if (!store) {
+      return res.status(404).json({ message: "Store not found." });
+    }
+
+    // Ownership check
+    if (String(userId) !== String(store.userId)) {
+      return res.status(403).json({
+        message: "You don't have permission to access this store.",
+      });
+    }
+
+    // Fetch orders
+    const orders = await OrderGroup.find({ storeId: store._id })
+      .populate("items")
+      .populate("couponId")
+      .populate({
+        path: "orderId",
+        select: "paymentStatus paymentDetails shippingAddressId",
+        populate: {
+          path: "shippingAddressId",
+          populate: [{ path: "countryId" }],
+        },
+      })
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json(orders);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: error.message || "Server error",
+    });
   }
 };

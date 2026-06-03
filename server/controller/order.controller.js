@@ -1,5 +1,6 @@
-import { Order, PaymentDetails } from "../models/order.model.js";
+import { Order, PaymentDetails, OrderGroup } from "../models/order.model.js";
 import { subMonths, subYears } from "date-fns";
+import { Store } from "../models/store.model.js";
 
 export const getOrderById = async (req, res) => {
   try {
@@ -298,6 +299,127 @@ export const getUserOrders = async (req, res) => {
     console.error("GET_USER_ORDERS_ERROR:", error);
     return res.status(500).json({
       message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * Update an order group's status.
+ * Only the owner of the store with SELLER privileges can perform this action.
+ * Validates store ownership and order existence before updating the status.
+ */
+export const updateOrderGroupStatus = async (req, res) => {
+  try {
+    const { storeId, groupId } = req.params;
+    const { status } = req.body;
+
+    const { userId } = req.auth;
+
+    // Check authentication
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthenticated",
+      });
+    }
+
+    // Check seller role
+    if (user.role !== "SELLER") {
+      return res.status(403).json({
+        message: "Unauthorized Access: Seller Privileges Required for Entry.",
+      });
+    }
+
+    // Verify store ownership
+    const store = await Store.findOne({
+      _id: storeId,
+      userId: userId,
+    });
+
+    if (!store) {
+      return res.status(403).json({
+        message: "Unauthorized Access!",
+      });
+    }
+
+    // Verify order group belongs to this store
+    const updatedOrder = await OrderGroup.findOneAndUpdate(
+      {
+        _id: groupId,
+        storeId,
+      },
+      {
+        $set: { status },
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: updatedOrder.status,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const updateOrderItemStatus = async (req, res) => {
+  try {
+    const { storeId, orderItemId } = req.params;
+    const { status } = req.body;
+
+    const { userId } = req.auth;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthenticated.",
+      });
+    }
+
+    if (user.role !== "SELLER") {
+      return res.status(403).json({
+        message: "Unauthorized Access: Seller Privileges Required for Entry.",
+      });
+    }
+
+    const store = await Store.findOne({
+      _id: storeId,
+      userId: user._id,
+    });
+
+    if (!store) {
+      return res.status(403).json({
+        message: "Unauthorized Access!",
+      });
+    }
+
+    const updatedOrderItem = await OrderItem.findByIdAndUpdate(
+      orderItemId,
+      { $set: { status } },
+      { new: true },
+    );
+
+    if (!updatedOrderItem) {
+      return res.status(404).json({
+        message: "Order item not found.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Order item status updated successfully.",
+      status: updatedOrderItem.status,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
     });
   }
 };
