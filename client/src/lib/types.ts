@@ -799,3 +799,53 @@ export type SizeFilters = {
   offer?: string;
   take?: number;
 };
+
+export type ProductSize = {
+  size: string;
+  price: number;
+  discount: number;
+  quantity: number;
+};
+
+export type ProductSimpleVariantType = {
+  variantId: string;
+  variantSlug: string;
+  variantName: string;
+  variantImage: string;
+  images: ProductVariantImage[];
+  sizes: Size[];
+};
+
+export type ProductWithVariants = {
+  id: string;
+  slug: string;
+  name: string;
+  rating: number;
+  sales: number;
+  numReviews: number;
+  variants: {
+    id: string;
+    variantName: string;
+    variantImage: string;
+    slug: string;
+    sizes: Size[];
+    images: ProductVariantImage[];
+  }[];
+};
+
+export type SimpleProduct = {
+  name: string;
+  slug: string;
+  variantName: string;
+  variantSlug: string;
+  price: number;
+  image: string;
+};
+
+export type FeaturedCategoryType = {
+  id: string;
+  name: string;
+  url: string;
+  productCount: number;
+  subCategories: SubCategory[];
+};

@@ -91,7 +91,9 @@ export default function ProductCard({ product }: { product: ProductType }) {
           />
           {/* Action buttons */}
           <div className="flex flex-items gap-x-1">
-            <Button>Add to cart</Button>
+            <Button>
+              <Link href={`/product/${slug}/${variantSlug}`}>Add to cart</Link>
+            </Button>
             <Button
               variant="black"
               size="icon"

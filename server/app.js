@@ -16,6 +16,7 @@ import couponRoutes from "./routes/coupon.routes.js";
 import orderRoutes from "./routes/order.route.js";
 import profileRoutes from "./routes/profile.route.js";
 import sizeRoutes from "./routes/size.route.js";
+import homeRoutes from "./routes/home.route.js";
 
 dotenv.config(); // Load .env file
 
@@ -45,6 +46,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/sizes", sizeRoutes);
+app.use("/api/home", homeRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server started at http://localhost:${PORT}`);

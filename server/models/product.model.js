@@ -67,6 +67,10 @@ const ProductSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
     shippingFeeMethod: {
       type: String,
       enum: ["ITEM", "WEIGHT", "FIXED"],

@@ -10,7 +10,6 @@ import ReactStars from "react-rating-stars-component";
 import Select from "../ui/select";
 import { VariantInfoType } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
 import ColorWheel from "@/components/shared/color-wheel";
 
 export default function AddReviewForm({
@@ -150,7 +149,7 @@ export default function AddReviewForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Textarea
+                      <textarea
                         className="min-h-32 p-4 w-full rounded-xl focus:outline-none"
                         placeholder="Write your review..."
                         value={field.value}
