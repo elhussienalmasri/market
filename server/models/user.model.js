@@ -2,20 +2,20 @@ import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const userSchema = new mongoose.Schema(
-	{
-		fullName: {
-			type: String,
-			required: true,
-		},
-		imageUrl: {
-			type: String,
-			required: true,
-		},
-		clerkId: {
-			type: String,
-			required: true,
-			unique: true,
-		},
+  {
+    fullName: {
+      type: String,
+      required: true,
+    },
+    imageUrl: {
+      type: String,
+      required: true,
+    },
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
 
     picture: {
       type: String,
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["USER", "ADMIN"],
+      enum: ["USER", "ADMIN", "SELLER"],
       default: "USER",
     },
 
@@ -90,9 +90,8 @@ const userSchema = new mongoose.Schema(
         ref: "Coupon",
       },
     ],
-    
-	},
-	{ timestamps: true } //  createdAt, updatedAt
+  },
+  { timestamps: true }, //  createdAt, updatedAt
 );
 
 const ShippingAddressSchema = new mongoose.Schema(
@@ -133,9 +132,11 @@ const ShippingAddressSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-
 export const User = mongoose.model("User", userSchema);
-export const ShippingAddress =  mongoose.model("ShippingAddress", ShippingAddressSchema);
+export const ShippingAddress = mongoose.model(
+  "ShippingAddress",
+  ShippingAddressSchema,
+);

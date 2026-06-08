@@ -8,7 +8,7 @@ import { User } from "../models/user.model.js";
 export const upsertStore = async (req, res) => {
   const { userId } = req.auth;
   try {
-    const user = req.user; // assume middleware adds authenticated user
+    const user = await User.findOne({ clerkId: userId });
 
     // Ensure user is authenticated
     if (!user) throw new Error("401: Unauthenticated.");
@@ -346,6 +346,7 @@ export const getStoreOrders = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: "Unauthenticated." });
     }
+    const user = await User.findOne({ clerkId: userId });
 
     // Role check
     if (user.role !== "SELLER") {

@@ -321,7 +321,7 @@ export const updateOrderGroupStatus = async (req, res) => {
         message: "Unauthenticated",
       });
     }
-
+    const user = await User.findOne({ clerkId: userId });
     // Check seller role
     if (user.role !== "SELLER") {
       return res.status(403).json({
@@ -377,6 +377,7 @@ export const updateOrderItemStatus = async (req, res) => {
     const { status } = req.body;
 
     const { userId } = req.auth;
+    const user = await User.findOne({ clerkId: userId });
 
     if (!userId) {
       return res.status(401).json({

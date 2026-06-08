@@ -1,5 +1,4 @@
 import StoreCard from "@/components/store/cards/store-card";
-import AddReviewForm from "@/components/store/forms/add-review";
 import CategoriesHeader from "@/components/store/layout/categories-header/categories-header";
 import Header from "@/components/store/layout/header/header";
 import ProductPageContainer from "@/components/store/product-page/container";
@@ -106,10 +105,8 @@ export default async function ProductVariantPage({
             rating={productData.rating}
             statistics={reviewsStatistics}
             reviews={reviews}
+            variantsInfo={variantInfo}
           />
-          <div className="mt-3">
-            <AddReviewForm productId={productId} variantsInfo={variantInfo} />
-          </div>
           <>
             <Separator className="mt-6" />
             {/* Product description */}

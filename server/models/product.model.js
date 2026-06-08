@@ -307,9 +307,9 @@ const ReviewSchema = new mongoose.Schema(
     variant: { type: String, required: true },
     review: { type: String, required: true },
     rating: { type: Number, required: true },
-    color: { type: String, required: true },
-    size: { type: String, required: true },
-    quantity: { type: String, required: true },
+    color: { type: String },
+    size: { type: String },
+    quantity: { type: String },
 
     likes: { type: Number, default: 0 },
 

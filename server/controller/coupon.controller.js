@@ -1,6 +1,7 @@
 import Coupon from "../models/coupon.model.js";
 import { Store } from "../models/store.model.js";
 import { Cart } from "../models/cart.model.js";
+import { User } from "../models/user.model.js";
 
 /**
  * Upsert Coupon
@@ -15,6 +16,7 @@ export const upsertCoupon = async (req, res) => {
         message: "Unauthenticated.",
       });
     }
+    const user = await User.findOne({ clerkId: userId });
 
     if (user.role !== "SELLER") {
       return res.status(403).json({
@@ -108,6 +110,8 @@ export const getStoreCoupons = async (req, res) => {
       });
     }
 
+    const user = await User.findOne({ clerkId: userId });
+
     if (user.role !== "SELLER") {
       return res.status(403).json({
         message: "Unauthorized Access: Seller Privileges Required for Entry.",
@@ -196,6 +200,7 @@ export const deleteCoupon = async (req, res) => {
         message: "Unauthenticated.",
       });
     }
+    const user = await User.findOne({ clerkId: userId });
 
     if (user.role !== "SELLER") {
       return res.status(403).json({

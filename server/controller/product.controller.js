@@ -35,6 +35,8 @@ export const upsertProduct = async (req, res) => {
     const { userId } = req.auth;
 
     if (!userId) return res.status(401).json({ error: "Unauthenticated." });
+    const user = await User.findOne({ clerkId: userId });
+
     if (user.role !== "SELLER")
       return res
         .status(403)

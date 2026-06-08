@@ -849,3 +849,14 @@ export type FeaturedCategoryType = {
   productCount: number;
   subCategories: SubCategory[];
 };
+
+export type ReviewDetailsType = {
+  id: string;
+  review: string;
+  rating: number;
+  images: { url: string }[];
+  size: string;
+  quantity: string;
+  variant: string;
+  color: string;
+};
