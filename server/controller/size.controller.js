@@ -1,4 +1,5 @@
 import { Size } from "../models/product.model.js";
+import { Store } from "../models/store.model.js";
 
 /**
  * GET filtered sizes
@@ -7,7 +8,21 @@ import { Size } from "../models/product.model.js";
 
 export const getFilteredSizes = async (req, res) => {
   try {
-    const { category, subCategory, offer, limit = 10 } = req.query;
+    const { category, subCategory, offer, limit = 10, storeUrl } = req.query;
+    let storeId;
+
+    if (storeUrl) {
+      const store = await Store.findOne({ url: storeUrl });
+
+      // If no store found → return empty response
+      if (!store) {
+        return res.status(200).json({
+          sizes: [],
+          count: 0,
+        });
+      }
+      storeId = store._id;
+    }
 
     const pipeline = [
       // Size -> ProductVariant
@@ -48,6 +63,14 @@ export const getFilteredSizes = async (req, res) => {
         $unwind: "$product",
       },
     ];
+
+    if (storeId) {
+      pipeline.push({
+        $match: {
+          "product.storeId": storeId,
+        },
+      });
+    }
 
     // Category filter
     if (category) {

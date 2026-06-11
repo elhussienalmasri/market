@@ -10,25 +10,25 @@ import {
   getProductFilteredReviews,
   getProductBySlug,
   getProductShippingFee,
-  getProductsByIds
+  getProductsByIds,
 } from "../controller/product.controller.js";
 
 import { requireAuth } from "@clerk/express";
 
-
 const router = express.Router();
 
-router.post("/upsert/:storeUrl", requireAuth(), upsertProduct);
+router.get("/", getProducts);
+router.get("/shipping-fee", getProductShippingFee);
 router.get("/:productId/variant/:variantId", getProductVariant);
-router.get("/:productId/info", getProductMainInfo);
-router.get("/:storeUrl", getAllStoreProducts);
 router.get("/reviews/:storeUrl", getProductFilteredReviews);
-                       
-router.delete("/:productId", requireAuth(), deleteProduct);
+router.get("/:productId/info", getProductMainInfo);
+router.get("/store/:storeUrl", getAllStoreProducts);
 router.get("/:productSlug/:variantSlug", getProductPageData);
 router.get("/:productSlug", getProductBySlug);
-router.post("/by-ids", getProductsByIds)
-router.get('/', getProducts);
-router.get("/shipping-fee", getProductShippingFee);
+
+router.delete("/:productId", requireAuth(), deleteProduct);
+
+router.post("/upsert/:storeUrl", requireAuth(), upsertProduct);
+router.post("/by-ids", getProductsByIds);
 
 export default router;

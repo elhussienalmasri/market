@@ -6,7 +6,7 @@ import { OfferTag } from "@/lib/types";
 import OfferLink from "./offer-link";
 
 export default function OfferFilter({ offers }: { offers: OfferTag[] }) {
-  const [show, setShow] = useState<boolean>(false);
+  const [show, setShow] = useState<boolean>(true);
   return (
     <div className="pt-5 pb-4">
       {/* Header */}
@@ -28,7 +28,7 @@ export default function OfferFilter({ offers }: { offers: OfferTag[] }) {
         })}
       >
         {offers.map((offer) => (
-          <OfferLink key={offer.id} offer={offer} />
+          <OfferLink key={offer._id} offer={offer} />
         ))}
       </div>
     </div>

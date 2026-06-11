@@ -2,6 +2,7 @@
 
 import { axiosInstance } from "@/lib/axios";
 import { StoreData } from "@/lib/types";
+import { StoreStatus } from "@/lib/types";
 
 // Function: upsertStore
 // Description: Sends store data to backend to create or update store
@@ -143,5 +144,65 @@ export const getStoreOrders = async (
     throw new Error(
       error?.response?.data?.message || "Failed to fetch store orders",
     );
+  }
+};
+
+export const applySeller = async (
+  store: Partial<StoreData>,
+  token: string | null,
+) => {
+  const { data } = await axiosInstance.post("/stores/apply-seller", store, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data.store;
+};
+
+export const getAllStores = async (
+  token: string | null,
+): Promise<StoreData[]> => {
+  const { data } = await axiosInstance.get("/stores/admin", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data.stores;
+};
+
+export const updateStoreStatus = async (
+  payload: {
+    storeId: string;
+    status: StoreStatus;
+  },
+  token: string | null,
+): Promise<StoreStatus> => {
+  const { data } = await axiosInstance.patch("/stores/admin/status", payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data.status;
+};
+
+export const deleteStore = async (storeId: string, token: string | null) => {
+  const { data } = await axiosInstance.delete(`/stores//admin/${storeId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return data.store;
+};
+
+export const getStorePageDetails = async (
+  storeUrl: string,
+): Promise<Partial<StoreData>> => {
+  try {
+    const { data } = await axiosInstance.get(`/stores/user/${storeUrl}`);
+
+    return data.store;
+  } catch (error) {
+    console.error("Error fetching store details:", error);
+    throw error;
   }
 };

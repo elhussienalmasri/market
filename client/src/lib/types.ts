@@ -1,4 +1,5 @@
 import { getProductPageData } from "@/api/product";
+import { getAllStores, getStorePageDetails } from "@/api/store";
 import countries from "@/data/countries.json";
 
 export interface DashboardSidebarMenuInterface {
@@ -127,10 +128,17 @@ export type StoreData = {
   defaultShippingFees?: number;
   defaultDeliveryTimeMin?: number;
   defaultDeliveryTimeMax?: number;
+  defaultShippingFeeFixed?: number;
+  defaultShippingFeeForAdditionalItem?: number;
+  defaultShippingFeePerItem?: number;
+  defaultShippingFeePerKg?: number;
+  numReviews?: number;
   userId: string;
   createdAt?: Date;
   updatedAt?: Date;
 };
+
+export type AdminStoreType = Awaited<ReturnType<typeof getAllStores>>[0];
 
 export type OfferTag = {
   _id: string;
@@ -798,6 +806,7 @@ export type SizeFilters = {
   subCategory?: string;
   offer?: string;
   take?: number;
+  storeUrl?: string;
 };
 
 export type ProductSize = {
@@ -860,3 +869,12 @@ export type ReviewDetailsType = {
   variant: string;
   color: string;
 };
+
+export enum StoreStatus {
+  PENDING = "PENDING",
+  ACTIVE = "ACTIVE",
+  BANNED = "BANNED",
+  DISABLED = "DISABLED",
+}
+
+export type StoreDetailsType = Awaited<ReturnType<typeof getStorePageDetails>>;

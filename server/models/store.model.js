@@ -9,7 +9,6 @@ const StoreStatus = {
   DISABLED: "DISABLED",
 };
 
-
 const StoreSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -25,43 +24,50 @@ const StoreSchema = new mongoose.Schema(
       default: StoreStatus.PENDING,
     },
     averageRating: { type: Number, default: 0 },
+    numReviews: { type: Number, default: 0 },
     featured: { type: Boolean, default: false },
-    returnPolicy: {type: String,default: "Return in 30 days." },
+    returnPolicy: { type: String, default: "Return in 30 days." },
     defaultShippingService: { type: String, default: "International Delivery" },
     defaultShippingFeePerItem: { type: Number, default: 0 },
-    defaultShippingFeeForAdditionalItem: {type: Number,default: 0},
+    defaultShippingFeeForAdditionalItem: { type: Number, default: 0 },
 
     defaultShippingFeeForSecondItem: { type: Number, default: 0 },
     defaultShippingFeePerKg: { type: Number, default: 0 },
     defaultShippingFeeForAll: { type: Number, default: 0 },
     defaultDeliveryTimeMin: { type: Number, default: 7 },
     defaultDeliveryTimeMax: { type: Number, default: 31 },
-    userId: { type: String, ref: "User", required: true },
-    defaultShippingFeeFixed: {type: Number, default: 0},
-    shippingRates: [{
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'ShippingRate',
-      index: true
-    }],
-      followers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"   
-    }
-  ],
-  cartItems: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CartItem"   
-    }
-  ],
+      ref: "User",
+      required: true,
+    },
+    defaultShippingFeeFixed: { type: Number, default: 0 },
+    shippingRates: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ShippingRate",
+        index: true,
+      },
+    ],
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    cartItems: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CartItem",
+      },
+    ],
 
-  orderGroups: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "OrderGroup"   
-    }
-  ],
+    orderGroups: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OrderGroup",
+      },
+    ],
     coupons: [
       {
         type: Schema.Types.ObjectId,
@@ -69,7 +75,7 @@ const StoreSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Store = mongoose.model("Store", StoreSchema);

@@ -3,9 +3,10 @@
 import { FC, useEffect, useState } from "react";
 import Image from "next/image";
 
-import { CldUploadWidget } from "next-cloudinary"; 
+import { CldUploadWidget } from "next-cloudinary";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   disabled?: boolean;
@@ -14,6 +15,7 @@ interface ImageUploadProps {
   value: string[];
   type: "standard" | "profile" | "cover";
   dontShowPreview?: boolean;
+  error?: boolean;
 }
 
 const ImageUpload: FC<ImageUploadProps> = ({
@@ -23,8 +25,20 @@ const ImageUpload: FC<ImageUploadProps> = ({
   value,
   type,
   dontShowPreview,
+  error,
 }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isBouncing, setIsBouncing] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      setIsBouncing(true);
+      const timer = setTimeout(() => {
+        setIsBouncing(false);
+      }, 1500);
+      return () => clearTimeout(timer); // Clean up timer if the component unmounts or error changes
+    }
+  }, [error]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -43,7 +57,15 @@ const ImageUpload: FC<ImageUploadProps> = ({
 
   if (type === "profile") {
     return (
-      <div className="relative rounded-full w-52 h-52  bg-gray-200 border-2 border-white shadow-2xl overflow-visible">
+      <div
+        className={cn(
+          "relative  rounded-full w-52 h-52  bg-gray-200 border-2 border-white shadow-2xl overflow-visible",
+          {
+            "bg-red-100": error,
+            "animate-pulse": isBouncing,
+          },
+        )}
+      >
         {value.length > 0 && (
           <Image
             src={value[0]}
@@ -53,7 +75,10 @@ const ImageUpload: FC<ImageUploadProps> = ({
             className="w-52 h-52 rounded-full object-cover absolute top-0 left-0 bottom-0 right-0"
           />
         )}
-        <CldUploadWidget onSuccess={onUpload} uploadPreset={CLOUDINARY_CLOUD_KEY}>
+        <CldUploadWidget
+          onSuccess={onUpload}
+          uploadPreset={CLOUDINARY_CLOUD_KEY}
+        >
           {({ open }) => {
             const onClick = () => {
               open();
@@ -85,7 +110,13 @@ const ImageUpload: FC<ImageUploadProps> = ({
   } else if (type === "cover") {
     return (
       <div
-        className="relative w-full bg-gray-100 rounded-lg bg-gradient-to-b from-gray-100 via-gray-100 to-gray-400 overflow-hidden"
+        className={cn(
+          "relative w-full bg-gray-100 rounded-lg bg-gradient-to-b from-gray-100 via-gray-100 to-gray-400 overflow-hidden",
+          {
+            "from-red-100 to-red-200 ": error,
+            "animate-bounce": isBouncing,
+          },
+        )}
         style={{ height: "348px" }}
       >
         {value.length > 0 && (
@@ -97,7 +128,10 @@ const ImageUpload: FC<ImageUploadProps> = ({
             className="w-full h-full rounded-lg object-cover"
           />
         )}
-        <CldUploadWidget onSuccess={onUpload} uploadPreset={CLOUDINARY_CLOUD_KEY}>
+        <CldUploadWidget
+          onSuccess={onUpload}
+          uploadPreset={CLOUDINARY_CLOUD_KEY}
+        >
           {({ open }) => {
             const onClick = () => {
               open();
@@ -127,7 +161,8 @@ const ImageUpload: FC<ImageUploadProps> = ({
           }}
         </CldUploadWidget>
       </div>
-    )} else {
+    );
+  } else {
     return (
       <div>
         <div className="mb-4 flex items-center gap-4">
@@ -160,8 +195,11 @@ const ImageUpload: FC<ImageUploadProps> = ({
               </div>
             ))}
         </div>
-        
-        <CldUploadWidget onSuccess={onUpload} uploadPreset={CLOUDINARY_CLOUD_KEY}>
+
+        <CldUploadWidget
+          onSuccess={onUpload}
+          uploadPreset={CLOUDINARY_CLOUD_KEY}
+        >
           {({ open }) => {
             const onClick = () => {
               open();

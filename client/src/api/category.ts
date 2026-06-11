@@ -21,7 +21,9 @@ export const upsertCategory = async (category: any) => {
 
     //  Check admin role
     if (user.privateMetadata.role !== "ADMIN") {
-      throw new Error("Unauthorized Access: Admin Privileges Required for Entry.");
+      throw new Error(
+        "Unauthorized Access: Admin Privileges Required for Entry.",
+      );
     }
 
     //  Validate input
@@ -36,17 +38,21 @@ export const upsertCategory = async (category: any) => {
 
     return response.data;
   } catch (error: any) {
-    console.error(" upsertCategory error:", error.response?.data || error.message);
+    console.error(
+      "upsertCategory error:",
+      error.response?.data || error.message,
+    );
 
     // Throw the backend error message if available
     throw new Error(error.response?.data?.error || error.message);
   }
 };
 
-
-export const getAllCategories = async () => {
+export const getAllCategories = async (storeUrl?: string) => {
   try {
-    const response = await axiosInstance.get("/categories"); // Adjust API path if needed
+    const response = await axiosInstance.get("/categories", {
+      params: { storeUrl },
+    });
     return response.data; // Return the array of categories
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -59,9 +65,11 @@ export const getAllCategories = async () => {
 // Parameters:
 //   - categoryId: The ID of the category whose subcategories are to be retrieved
 // Returns: Array of subcategories sorted by updatedAt in descending order
-export const getAllSubCategoriesForCategory = async (categoryId:string) => {
+export const getAllSubCategoriesForCategory = async (categoryId: string) => {
   try {
-    const response = await axiosInstance.get(`/categories/${categoryId}/subcategories`);
+    const response = await axiosInstance.get(
+      `/categories/${categoryId}/subcategories`,
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching categories:", error);

@@ -1,5 +1,4 @@
 import { Store } from "../models/store.model.js";
-//import User from "../models/User.js"; // if you use User model for reference
 import { Country, ShippingRate } from "../models/country.model.js";
 import { OrderGroup } from "../models/order.model.js";
 import { User } from "../models/user.model.js";
@@ -388,6 +387,265 @@ export const getStoreOrders = async (req, res) => {
     console.error(error);
     return res.status(500).json({
       message: error.message || "Server error",
+    });
+  }
+};
+
+export const applySeller = async (req, res) => {
+  try {
+    const store = req.body;
+    const { userId } = req.auth;
+    const user = await User.findOne({ clerkId: userId });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthenticated",
+      });
+    }
+
+    if (!store) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide store data",
+      });
+    }
+
+    // Optional: prevent one user from creating multiple stores
+    const existingUserStore = await Store.findOne({
+      userId: user._id,
+    });
+
+    if (existingUserStore) {
+      return res.status(400).json({
+        success: false,
+        message: "You already own a store",
+      });
+    }
+
+    const existingStore = await Store.findOne({
+      $or: [
+        { name: store.name },
+        { email: store.email },
+        { phone: store.phone },
+        { url: store.url },
+      ],
+    });
+
+    if (existingStore) {
+      let message = "Store already exists";
+
+      if (existingStore.name === store.name) {
+        message = "A store with the same name already exists";
+      } else if (existingStore.email === store.email) {
+        message = "A store with the same email already exists";
+      } else if (existingStore.phone === store.phone) {
+        message = "A store with the same phone number already exists";
+      } else if (existingStore.url === store.url) {
+        message = "A store with the same URL already exists";
+      }
+
+      return res.status(409).json({
+        success: false,
+        message,
+      });
+    }
+
+    const newStore = await Store.create({
+      ...store,
+      userId: user._id,
+      status: "PENDING", // optional since schema default exists
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Seller application submitted successfully",
+      store: newStore,
+    });
+  } catch (error) {
+    console.error("applySeller:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+export const getAllStores = async (req, res) => {
+  try {
+    const { userId } = req.auth;
+    const user = await User.findOne({ clerkId: userId });
+
+    // Auth check
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthenticated.",
+      });
+    }
+
+    // Admin check
+    if (user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Unauthorized Access: Admin Privileges Required to View Stores.",
+      });
+    }
+
+    // Fetch stores
+    const stores = await Store.find().sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      stores: stores,
+    });
+  } catch (error) {
+    console.error("getAllStores error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const updateStoreStatus = async (req, res) => {
+  try {
+    const { userId } = req.auth;
+    const user = await User.findOne({ clerkId: userId });
+    const { storeId, status } = req.body;
+
+    // Auth check
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthenticated.",
+      });
+    }
+
+    // Admin check
+    if (user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized Access: Admin Privileges Required for Entry.",
+      });
+    }
+
+    // Find store
+    const store = await Store.findById(storeId);
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: "Store not found!",
+      });
+    }
+
+    const previousStatus = store.status;
+
+    // Update store status
+    store.status = status;
+    const updatedStore = await store.save();
+
+    // If approved → make user SELLER
+    if (previousStatus === "PENDING" && updatedStore.status === "ACTIVE") {
+      await User.findByIdAndUpdate(updatedStore.userId, {
+        role: "SELLER",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: updatedStore.status,
+    });
+  } catch (error) {
+    console.error("updateStoreStatus error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+// Deletes a store by ID (Admin only)
+export const deleteStore = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const { userId } = req.auth;
+
+    const user = await User.findOne({ clerkId: userId });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthenticated.",
+      });
+    }
+
+    // Verify admin permission
+    if (user.privateMetadata.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized Access: Admin Privileges Required.",
+      });
+    }
+
+    // Ensure store ID is provided
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide store ID.",
+      });
+    }
+    // Delete store
+    const store = await Store.findByIdAndDelete(storeId);
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: "Store not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Store deleted successfully.",
+      store: store,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error.",
+    });
+  }
+};
+
+export const getStorePageDetails = async (req, res) => {
+  try {
+    const { storeUrl } = req.params;
+    const store = await Store.findOne({
+      url: storeUrl,
+      status: "ACTIVE",
+    }).select("name description logo cover averageRating numReviews");
+
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        message: `Store with URL "${storeUrl}" not found.`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      store: store,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch store details",
+      error: error.message,
     });
   }
 };

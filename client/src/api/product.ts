@@ -70,7 +70,7 @@ export const getProductMainInfo = async (productId: string) => {
 // Description: Fetch all products for a given store URL (Public)
 export const getAllStoreProducts = async (storeUrl: string) => {
   try {
-    const response = await axiosInstance.get(`/product/${storeUrl}`);
+    const response = await axiosInstance.get(`/store/product/${storeUrl}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching store products:", error);
@@ -235,7 +235,7 @@ export const fetchShippingFee = async ({
 export const getProductsByIds = async (
   ids: string[],
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
 ) => {
   try {
     const { data } = await axiosInstance.get("/products/by-ids", {
@@ -249,8 +249,7 @@ export const getProductsByIds = async (
     return data;
   } catch (error: any) {
     throw new Error(
-      error?.response?.data?.message ||
-      "Failed to fetch products"
+      error?.response?.data?.message || "Failed to fetch products",
     );
   }
 };
